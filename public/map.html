@@ -373,14 +373,19 @@
             <h3 style="margin-top: 0; border-bottom: 2px solid #eee; padding-bottom: 10px;">⚙️ ตั้งค่ารถและแบตเตอรี่
             </h3>
             <label style="display:block; margin-top:10px; font-weight:bold; font-size: 13px;">ยี่ห้อรถ (Brand):</label>
-            <input type="text" id="edit-brand"
+            <select id="edit-brand"
                 style="width: 100%; padding: 8px; margin-top: 5px; border: 1px solid #ccc; border-radius: 6px; box-sizing: border-box;">
+                <option value="">-- เลือกยี่ห้อรถ --</option>
+            </select>
+            
             <label style="display:block; margin-top:10px; font-weight:bold; font-size: 13px;">รุ่นรถ (Model):</label>
-            <input type="text" id="edit-model"
+            <select id="edit-model"
                 style="width: 100%; padding: 8px; margin-top: 5px; border: 1px solid #ccc; border-radius: 6px; box-sizing: border-box;">
+                <option value="">-- เลือกรุ่นรถ --</option>
+            </select>
             <label style="display:block; margin-top:10px; font-weight:bold; font-size: 13px;">ระยะทางสูงสุด
                 (กม.):</label>
-            <input type="number" id="edit-range"
+            <input type="number" id="edit-range" readonly
                 style="width: 100%; padding: 8px; margin-top: 5px; border: 1px solid #ccc; border-radius: 6px; box-sizing: border-box;">
             <label style="display:block; margin-top:10px; font-weight:bold; font-size: 13px;">แบตเตอรี่ปัจจุบัน
                 (%):</label>
@@ -737,6 +742,127 @@
                 window.location.href = 'login.html';
             }
         }
+        
+        // 1. นำฐานข้อมูลรถจากหน้าโปรไฟล์มาใช้
+            const evDatabase = {
+                "BYD": [
+                    { model: "Atto 3 Extended", range: 480 },
+                    { model: "Atto 3 Standard", range: 410 },
+                    { model: "Dolphin Extended", range: 490 },
+                    { model: "Seal Performance", range: 580 },
+                    { model: "Seal Dynamic/Premium", range: 650 }
+                ],
+                "Tesla": [
+                    { model: "Model Y Rear-Wheel Drive", range: 455 },
+                    { model: "Model Y Long Range", range: 533 },
+                    { model: "Model 3 Rear-Wheel Drive", range: 513 },
+                    { model: "Model 3 Long Range", range: 629 }
+                ],
+                "MG": [
+                    { model: "MG4 Electric Standard", range: 350 },
+                    { model: "MG4 Electric Long Range", range: 540 },
+                    { model: "MG ZS EV", range: 403 },
+                    { model: "MG MAXUS 7", range: 480 }
+                ],
+                "GWM / Ora": [
+                    { model: "Ora Good Cat 400 PRO", range: 400 },
+                    { model: "Ora Good Cat 500 ULTRA", range: 500 },
+                    { model: "Ora 07 Performance", range: 550 }
+                ],
+                "Neta": [
+                    { model: "Neta V / V-II", range: 384 },
+                    { model: "Neta X", range: 480 }
+                ],
+                "AION": [
+                    { model: "AION Y Plus 490", range: 490 },
+                    { model: "AION Y Plus 580", range: 580 },
+                    { model: "AION ES", range: 442 }
+                ],
+                "Volvo": [
+                    { model: "EX30 Single Motor Extended", range: 480 },
+                    { model: "XC40 Recharge Twin", range: 500 },
+                    { model: "C40 Recharge Twin", range: 507 }
+                ],
+                "BMW": [
+                    { model: "iX3 M Sport", range: 460 },
+                    { model: "i4 eDrive35", range: 483 },
+                    { model: "iX xDrive40", range: 425 }
+                ],
+                "Porsche": [
+                    { model: "Taycan 4S", range: 512 },
+                    { model: "Taycan Turbo", range: 557 }
+                ],
+                "Audi": [
+                    { model: "Q8 e-tron 50", range: 491 },
+                    { model: "e-tron GT", range: 528 }
+                ]
+            };
+
+            // 2. ฟังก์ชันโหลดชื่อยี่ห้อใส่ Dropdown
+            function loadBrandsToMap() {
+                const brandSelect = document.getElementById('edit-brand');
+                brandSelect.innerHTML = '<option value="">-- เลือกยี่ห้อรถ --</option>';
+
+                Object.keys(evDatabase).forEach(brand => {
+                    const option = document.createElement('option');
+                    option.value = brand;
+                    option.textContent = brand;
+                    brandSelect.appendChild(option);
+                });
+            }
+
+            // 3. เมื่อเลือกยี่ห้อ ให้โหลดรายชื่อรุ่นรถ
+            document.getElementById('edit-brand').addEventListener('change', function () {
+                const selectedBrand = this.value;
+                const modelSelect = document.getElementById('edit-model');
+
+                modelSelect.innerHTML = '<option value="">-- เลือกรุ่นรถ --</option>';
+                document.getElementById('edit-range').value = '';
+
+                if (selectedBrand && evDatabase[selectedBrand]) {
+                    evDatabase[selectedBrand].forEach(car => {
+                        const option = document.createElement('option');
+                        option.value = car.model;
+                        option.textContent = car.model;
+                        // แอบซ่อนค่าระยะทางไว้ใน attribute
+                        option.setAttribute('data-range', car.range);
+                        modelSelect.appendChild(option);
+                    });
+                }
+            });
+
+            // 4. เมื่อเลือกรุ่นรถ ให้อัปเดตช่องระยะทางอัตโนมัติ
+            document.getElementById('edit-model').addEventListener('change', function () {
+                const selectedOption = this.options[this.selectedIndex];
+                const range = selectedOption.getAttribute('data-range');
+
+                if (range) {
+                    document.getElementById('edit-range').value = range;
+                } else {
+                    document.getElementById('edit-range').value = '';
+                }
+            });
+
+            // 5. แก้ไขปุ่มกดเปิด Modal ให้ดึงค่าเก่ามาแสดงถูกต้อง
+            document.getElementById('user-status').addEventListener('click', function () {
+                document.getElementById('profile-modal').style.display = 'flex';
+
+                const brandSelect = document.getElementById('edit-brand');
+                brandSelect.value = myEV.brand || '';
+
+                // สั่งให้ระบบจำลองการกดเปลี่ยนยี่ห้อ เพื่อดึงรายชื่อรุ่นรถออกมารอ
+                brandSelect.dispatchEvent(new Event('change'));
+
+                // หน่วงเวลาเล็กน้อยให้รุ่นรถโหลดเสร็จ ค่อยเซ็ตค่าที่ผู้ใช้เคยเลือกไว้
+                setTimeout(() => {
+                    document.getElementById('edit-model').value = myEV.model || '';
+                    document.getElementById('edit-range').value = myEV.range_km || '';
+                    document.getElementById('edit-battery').value = currentUser.current_battery || 100;
+                }, 50);
+            });
+
+            // โหลดข้อมูลทันทีเมื่อเปิดหน้าเว็บ
+            loadBrandsToMap();
     </script>
 </body>
 
