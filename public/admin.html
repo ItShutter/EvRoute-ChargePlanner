@@ -1,0 +1,220 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Dashboard - EV Route Planner</title>
+    <style>
+        * { box-sizing: border-box; }
+        body { 
+            margin: 0; padding: 20px; 
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
+            display: flex; 
+            justify-content: center; 
+            align-items: center; 
+            min-height: 100vh; 
+            
+            /* ภาพพื้นหลังธีมเดียวกับระบบ */
+            background: linear-gradient(rgba(0, 0, 0, 0.5), rgba(0, 0, 0, 0.7)), 
+                        url('https://images.unsplash.com/photo-1593941707882-a5bba14938c7?q=80&w=1920&auto=format&fit=crop') no-repeat center center fixed;
+            background-size: cover;
+        }
+
+        /* สไตล์กล่องกระจกใส (Glassmorphism) */
+        .glass-card {
+            background: rgba(255, 255, 255, 0.92);
+            backdrop-filter: blur(10px);
+            padding: 35px 30px;
+            border-radius: 16px;
+            box-shadow: 0 15px 35px rgba(0,0,0,0.3);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            width: 100%;
+        }
+
+        /* กล่องฟอร์มล็อกอิน Admin */
+        .login-box { max-width: 400px; }
+        
+        /* กล่อง Dashboard */
+        .dashboard-box { max-width: 850px; }
+
+        h2 { color: #1f2937; margin-top: 0; text-align: center; margin-bottom: 25px; font-size: 24px; }
+        
+        .form-group { margin-bottom: 18px; }
+        .form-group label { display: block; font-size: 13px; font-weight: bold; color: #4b5563; margin-bottom: 6px; }
+        .form-group input { 
+            width: 100%; padding: 12px 15px; border: 1px solid #d1d5db; 
+            border-radius: 8px; font-size: 14px; outline: none; transition: all 0.3s ease;
+        }
+        .form-group input:focus { border-color: #3b82f6; box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.15); }
+        
+        /* ปุ่มล็อกอินใช้สีน้ำเงินให้ต่างจาก User */
+        .btn-submit { 
+            width: 100%; padding: 12px; background-color: #3b82f6; color: white; 
+            border: none; border-radius: 8px; font-weight: bold; cursor: pointer; 
+            font-size: 16px; margin-top: 10px; transition: background 0.3s ease, transform 0.1s ease; 
+        }
+        .btn-submit:hover { background-color: #2563eb; }
+        .btn-submit:active { transform: scale(0.98); }
+
+        /* กล่องครอบตารางสำหรับทำแถบเลื่อน (Scrollbar) */
+        .table-container {
+            max-height: 350px; /* กำหนดความสูงสูงสุด (ถ้าข้อมูลเกิน จะเกิดแถบเลื่อน) */
+            overflow-y: auto;  /* เลื่อนขึ้น-ลงได้ */
+            margin-top: 20px;
+            background: white; 
+            border-radius: 8px; 
+            box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+        }
+
+        /* ตารางข้อมูลสมาชิก */
+        table { width: 100%; border-collapse: collapse; }
+        th, td { padding: 15px; border-bottom: 1px solid #e5e7eb; text-align: left; font-size: 14px; }
+        
+        /* หัวตารางแบบติดหนึบ (Sticky Header) */
+        th { 
+            background-color: #f9fafb; 
+            color: #374151; 
+            font-weight: bold; 
+            position: sticky; /* ล็อกหัวตารางให้อยู่กับที่ */
+            top: 0; 
+            z-index: 10; /* ให้อยู่บนสุดเสมอ จะได้ไม่โดนแถวอื่นบัง */
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+        }
+        tr:last-child td { border-bottom: none; }
+        tr:hover { background-color: #f3f4f6; }
+
+        .btn-edit { 
+            background-color: #10b981; color: white; border: none; padding: 8px 15px; 
+            border-radius: 6px; cursor: pointer; font-weight: bold; transition: background 0.2s;
+        }
+        .btn-edit:hover { background-color: #059669; }
+
+        .link-back { text-decoration: none; color: #3b82f6; font-size: 14px; font-weight: bold; }
+        .link-back:hover { text-decoration: underline; }
+    </style>
+</head>
+<body>
+
+    <!-- 1. ส่วนหน้าต่างล็อกอิน Admin -->
+    <div id="admin-login-container" class="glass-card login-box">
+        <h2>👑 Admin Login</h2>
+        <form onsubmit="handleAdminLogin(event)">
+            <div class="form-group">
+                <label>ชื่อผู้ดูแลระบบ (Username):</label>
+                <input type="text" id="admin-user" placeholder="กรอกชื่อแอดมิน" required>
+            </div>
+            <div class="form-group">
+                <label>รหัสผ่าน (Password):</label>
+                <input type="password" id="admin-pass" placeholder="กรอกรหัสผ่าน" required>
+            </div>
+            <button type="submit" class="btn-submit">เข้าสู่ระบบแอดมิน</button>
+        </form>
+        <div style="text-align: center; margin-top: 20px;">
+            <a href="map.html" class="link-back">← กลับสู่หน้าแผนที่หลัก</a>
+        </div>
+    </div>
+
+    <!-- 2. ส่วนแผงควบคุมหลังบ้าน (แสดงเมื่อล็อกอินผ่าน) -->
+    <div id="admin-dashboard" class="glass-card dashboard-box" style="display: none;">
+        <h2>👑 แผงควบคุมผู้ดูแลระบบ (Admin Dashboard)</h2>
+        <p style="color: #4b5563; font-weight: bold; margin-bottom: 10px;">📋 รายชื่อสมาชิกทั้งหมดในระบบ:</p>
+        
+        <div class="table-container">
+            <table>
+                <thead>
+                    <tr>
+                        <th>ชื่อผู้ใช้งาน (Username)</th>
+                        <th>ประเภทสิทธิ์</th>
+                        <th>จัดการ</th>
+                    </tr>
+                </thead>
+                <tbody id="user-list">
+                    <!-- ข้อมูลสมาชิกจะถูกดึงมาแสดงตรงนี้ -->
+                </tbody>
+            </table>
+        </div>
+        
+        <div style="margin-top: 25px; display: flex; justify-content: space-between; align-items: center;">
+            <a href="map.html" class="link-back">← กลับสู่หน้าแผนที่</a>
+            <button onclick="logoutAdmin()" style="background: #ef4444; color: white; border: none; padding: 10px 20px; border-radius: 8px; cursor: pointer; font-weight: bold; transition: background 0.2s;">ออกจากระบบแอดมิน</button>
+        </div>
+    </div>
+
+    <script>
+    // ตรวจสอบว่าเคยล็อกอินแอดมินค้างไว้หรือไม่
+    if (localStorage.getItem('isAdminLoggedIn') === 'true') {
+        showDashboard();
+    }
+
+    // ฟังก์ชันตรวจสอบรหัสผ่านแอดมิน
+    function handleAdminLogin(event) {
+        event.preventDefault();
+        const user = document.getElementById('admin-user').value.trim();
+        const pass = document.getElementById('admin-pass').value.trim();
+
+        if (user === 'admin' && pass === '123456') {
+            localStorage.setItem('isAdminLoggedIn', 'true');
+            showDashboard();
+        } else {
+            alert('❌ ชื่อผู้ใช้หรือรหัสผ่านแอดมินไม่ถูกต้อง!');
+        }
+    }
+
+    // แสดงหน้าแดชบอร์ดหลังบ้าน
+    function showDashboard() {
+        document.getElementById('admin-login-container').style.display = 'none';
+        document.getElementById('admin-dashboard').style.display = 'block';
+        loadAllUsers();
+    }
+
+    // ออกจากระบบแอดมิน
+    function logoutAdmin() {
+        localStorage.removeItem('isAdminLoggedIn');
+        location.reload();
+    }
+
+    // โหลดรายชื่อสมาชิกจากฐานข้อมูลจริง (เชื่อมต่อ API)
+        async function loadAllUsers() {
+            const tbody = document.getElementById('user-list');
+            tbody.innerHTML = '<tr><td colspan="3" style="text-align: center; padding: 20px;">⏳ กำลังโหลดข้อมูล...</td></tr>';
+
+            try {
+                const response = await fetch('/api/admin/users');
+                const data = await response.json();
+
+                if (data.success) {
+                    tbody.innerHTML = ''; // ล้างข้อความกำลังโหลดออก
+                    const users = data.users;
+
+                    if (users.length === 0) {
+                        tbody.innerHTML = '<tr><td colspan="3" style="text-align: center; padding: 20px;">ยังไม่มีสมาชิกในระบบ</td></tr>';
+                        return;
+                    }
+
+                    // วนลูปสร้างแถวตารางจากข้อมูลจริง
+                    users.forEach((user) => {
+                        const role = user.role || 'member'; // ป้องกันกรณี role ว่าง
+                        const tr = document.createElement('tr');
+                        tr.innerHTML = `
+                        <td style="font-weight: bold; color: #1f2937;">${user.username}</td>
+                        <td><span style="padding: 5px 10px; border-radius: 20px; font-size: 12px; font-weight: bold; background: ${role === 'admin' ? '#fee2e2; color: #991b1b' : '#e0e7ff; color: #3730a3'}">${role.toUpperCase()}</span></td>
+                        <td><button class="btn-edit" onclick="editUser('${user.username}')">✏️ แก้ไขข้อมูล</button></td>
+                    `;
+                        tbody.appendChild(tr);
+                    });
+                } else {
+                    tbody.innerHTML = `<tr><td colspan="3" style="text-align: center; color: red;">❌ ${data.message}</td></tr>`;
+                }
+            } catch (error) {
+                console.error('Fetch error:', error);
+                tbody.innerHTML = '<tr><td colspan="3" style="text-align: center; color: red;">❌ ไม่สามารถเชื่อมต่อกับเซิร์ฟเวอร์ได้</td></tr>';
+            }
+        }
+
+    // ฟังก์ชันกดแก้ไขข้อมูล (พาไปหน้า edit-user.html)
+    function editUser(username) {
+        window.location.href = `edit-user.html?user=${encodeURIComponent(username)}`;
+    }
+    </script>
+</body>
+</html>

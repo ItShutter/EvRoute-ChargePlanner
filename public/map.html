@@ -1,0 +1,743 @@
+<!DOCTYPE html>
+<html lang="th">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>EV Route Planner - Main Map</title>
+
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <link rel="stylesheet" href="https://unpkg.com/leaflet-routing-machine@latest/dist/leaflet-routing-machine.css" />
+    <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.4.1/dist/MarkerCluster.css" />
+    <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.4.1/dist/MarkerCluster.Default.css" />
+
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        #map {
+            width: 100vw;
+            height: 100vh;
+        }
+
+        .marker-cluster-small,
+        .marker-cluster-medium,
+        .marker-cluster-large {
+            background-color: rgba(16, 185, 129, 0.6);
+        }
+
+        .marker-cluster-small div,
+        .marker-cluster-medium div,
+        .marker-cluster-large div {
+            background-color: rgba(16, 185, 129, 0.9);
+            color: white;
+            font-weight: bold;
+        }
+
+        /* 🔍 ช่องค้นหามุมซ้ายบน */
+        #top-left-search {
+            position: absolute;
+            top: 20px;
+            left: 65px;
+            z-index: 1000;
+            width: 280px;
+        }
+
+        .search-box {
+            background: white;
+            padding: 10px 14px;
+            border-radius: 10px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.15);
+            display: flex;
+            gap: 8px;
+        }
+
+        .search-box input {
+            width: 100%;
+            border: none;
+            outline: none;
+            font-size: 14px;
+        }
+
+        .search-btn {
+            background: #3b82f6;
+            color: white;
+            border: none;
+            padding: 6px 12px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: bold;
+            font-size: 13px;
+        }
+
+        .search-btn:hover {
+            background: #2563eb;
+        }
+
+        /* 📍 แผงควบคุมมุมขวาบน */
+        #top-right-panel {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            z-index: 1000;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            width: 300px;
+        }
+
+        #user-profile-top {
+            background: white;
+            padding: 10px 16px;
+            border-radius: 10px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.15);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            font-size: 14px;
+        }
+
+        .clickable-username {
+            color: #3b82f6;
+            cursor: pointer;
+            text-decoration: none;
+        }
+
+        .clickable-username:hover {
+            text-decoration: underline;
+        }
+
+        .logout-btn {
+            background: #ef4444;
+            color: white;
+            border: none;
+            padding: 5px 12px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 12px;
+            font-weight: bold;
+        }
+
+        .logout-btn:hover {
+            background: #dc2626;
+        }
+
+        #user-status {
+            background: white;
+            padding: 12px 16px;
+            border-radius: 10px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.15);
+            border-left: 5px solid #10b981;
+            cursor: pointer;
+            transition: transform 0.2s;
+        }
+
+        #user-status:hover {
+            transform: translateY(-2px);
+        }
+
+        #user-status h4 {
+            margin: 0 0 4px 0;
+            color: #1f2937;
+            font-size: 14px;
+        }
+
+        #user-status p {
+            margin: 0;
+            font-size: 13px;
+            color: #4b5563;
+        }
+
+        /* --- CSS สำหรับแผงสรุปเส้นทางแบบ Timeline --- */
+        .bottom-panel {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: #ffffff;
+            border-radius: 24px 24px 0 0;
+            padding: 20px 25px;
+            box-shadow: 0 -10px 25px rgba(0, 0, 0, 0.15);
+            z-index: 1000;
+            max-height: 50vh;
+            overflow-y: auto;
+            transition: transform 0.3s ease;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        .bottom-panel.hidden {
+            transform: translateY(120%);
+        }
+
+        .panel-header {
+            text-align: center;
+            margin-bottom: 15px;
+        }
+
+        .drag-handle {
+            width: 50px;
+            height: 5px;
+            background: #d1d5db;
+            border-radius: 5px;
+            margin: 0 auto;
+        }
+
+        .summary-card {
+            background: #1f2937;
+            color: white;
+            padding: 15px 20px;
+            border-radius: 12px;
+            margin-bottom: 25px;
+        }
+
+        .summary-card h3 {
+            margin: 0 0 10px 0;
+            font-size: 16px;
+        }
+
+        .summary-card p {
+            font-size: 13px;
+            color: #d1d5db;
+            margin: 0 0 15px 0;
+            line-height: 1.5;
+        }
+
+        .summary-stats {
+            display: flex;
+            justify-content: space-between;
+            font-size: 14px;
+            color: #10b981;
+        }
+
+        .timeline {
+            position: relative;
+            padding-left: 20px;
+            margin-bottom: 70px;
+        }
+
+        .timeline::before {
+            content: '';
+            position: absolute;
+            left: 4px;
+            top: 5px;
+            bottom: 5px;
+            width: 2px;
+            background: #e5e7eb;
+        }
+
+        .timeline-item {
+            position: relative;
+            padding-bottom: 25px;
+        }
+
+        .timeline-item:last-child {
+            padding-bottom: 0;
+        }
+
+        .timeline-item::before {
+            content: '';
+            position: absolute;
+            left: -20px;
+            top: 5px;
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            background: #9ca3af;
+            border: 2px solid white;
+            box-shadow: 0 0 0 2px #e5e7eb;
+        }
+
+        .timeline-item.start::before {
+            background: #3b82f6;
+            box-shadow: 0 0 0 2px #bfdbfe;
+        }
+
+        .timeline-item.charge::before {
+            background: #10b981;
+            box-shadow: 0 0 0 2px #a7f3d0;
+        }
+
+        .timeline-item.end::before {
+            background: #ef4444;
+            box-shadow: 0 0 0 2px #fecaca;
+        }
+
+        .timeline-title {
+            font-size: 14px;
+            font-weight: bold;
+            color: #374151;
+            margin-bottom: 5px;
+        }
+
+        .timeline-desc {
+            font-size: 12px;
+            color: #6b7280;
+            margin-bottom: 8px;
+        }
+
+        .timeline-badge {
+            display: inline-block;
+            background: #ecfdf5;
+            color: #059669;
+            padding: 4px 8px;
+            border-radius: 6px;
+            font-size: 11px;
+            font-weight: bold;
+            margin-right: 5px;
+        }
+
+        /* ปุ่มนำทางที่ลอยอยู่เหนือแผงด้านล่าง */
+        .google-map-btn-floating {
+            position: absolute;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: #4285F4;
+            color: white;
+            border: none;
+            padding: 12px 25px;
+            border-radius: 30px;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: bold;
+            box-shadow: 0 4px 15px rgba(66, 133, 244, 0.4);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            z-index: 1001;
+            transition: all 0.2s ease;
+            width: 80%;
+            max-width: 350px;
+        }
+
+        .google-map-btn-floating:hover {
+            background: #3367D6;
+            transform: translateX(-50%) scale(1.05);
+        }
+    </style>
+</head>
+
+<body>
+
+    <!-- 🌍 พื้นที่แผนที่ -->
+    <div id="map"></div>
+
+    <!-- 🔍 ช่องค้นหามุมซ้ายบน -->
+    <div id="top-left-search">
+        <div class="search-box">
+            <input type="text" id="search-input" placeholder="🔍 ค้นหาสถานที่, จุดหมาย..."
+                onkeypress="handleSearchKey(event)">
+            <button class="search-btn" onclick="searchLocation()">ค้นหา</button>
+        </div>
+    </div>
+
+    <!-- 📍 แผงควบคุมมุมขวาบน -->
+    <div id="top-right-panel">
+        <div id="user-profile-top">
+            <span>👤 <strong id="display-username" class="clickable-username"
+                    onclick="goToProfile()">Guest</strong></span>
+            <button class="logout-btn" onclick="logout()">ออกจากระบบ</button>
+        </div>
+        <div id="user-status" title="คลิกเพื่อแก้ไขข้อมูลรถ">
+            <h4 id="status-car-name">🚗 กำลังโหลดข้อมูลรถ...</h4>
+            <p>🔋 แบตเตอรี่ปัจจุบัน: <strong id="status-battery" style="color: #10b981;">--%</strong></p>
+        </div>
+    </div>
+
+    <!-- 📋 แผงสรุปการเดินทาง (Bottom Panel) -->
+    <div id="route-summary-panel" class="bottom-panel hidden">
+        <div class="panel-header">
+            <div class="drag-handle"></div>
+        </div>
+        <div class="summary-card">
+            <h3>สรุปการเดินทาง</h3>
+            <p id="summary-text">กำลังคำนวณเส้นทางและจุดแวะชาร์จ...</p>
+            <div class="summary-stats">
+                <span>🚗 ระยะทางรวม: <strong id="summary-dist">0 km</strong></span>
+                <span>⏱️ เวลาเดินทาง: <strong id="summary-time">0 h</strong></span>
+            </div>
+        </div>
+        <div class="timeline" id="route-timeline"></div>
+        <button class="google-map-btn-floating" onclick="openGoogleMaps()">🚀 เริ่มนำทางด้วย Google Maps</button>
+    </div>
+
+    <!-- ⚙️ หน้าต่างป๊อปอัปสำหรับแก้ไขข้อมูลโปรไฟล์รถ -->
+    <div id="profile-modal"
+        style="display: none; position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(0,0,0,0.5); z-index: 2000; align-items: center; justify-content: center;">
+        <div
+            style="background: white; padding: 25px; border-radius: 12px; width: 90%; max-width: 350px; box-shadow: 0 10px 25px rgba(0,0,0,0.3);">
+            <h3 style="margin-top: 0; border-bottom: 2px solid #eee; padding-bottom: 10px;">⚙️ ตั้งค่ารถและแบตเตอรี่
+            </h3>
+            <label style="display:block; margin-top:10px; font-weight:bold; font-size: 13px;">ยี่ห้อรถ (Brand):</label>
+            <input type="text" id="edit-brand"
+                style="width: 100%; padding: 8px; margin-top: 5px; border: 1px solid #ccc; border-radius: 6px; box-sizing: border-box;">
+            <label style="display:block; margin-top:10px; font-weight:bold; font-size: 13px;">รุ่นรถ (Model):</label>
+            <input type="text" id="edit-model"
+                style="width: 100%; padding: 8px; margin-top: 5px; border: 1px solid #ccc; border-radius: 6px; box-sizing: border-box;">
+            <label style="display:block; margin-top:10px; font-weight:bold; font-size: 13px;">ระยะทางสูงสุด
+                (กม.):</label>
+            <input type="number" id="edit-range"
+                style="width: 100%; padding: 8px; margin-top: 5px; border: 1px solid #ccc; border-radius: 6px; box-sizing: border-box;">
+            <label style="display:block; margin-top:10px; font-weight:bold; font-size: 13px;">แบตเตอรี่ปัจจุบัน
+                (%):</label>
+            <input type="number" id="edit-battery"
+                style="width: 100%; padding: 8px; margin-top: 5px; border: 1px solid #ccc; border-radius: 6px; box-sizing: border-box;"
+                min="1" max="100">
+            <div style="display: flex; justify-content: space-between; margin-top: 20px;">
+                <button onclick="closeProfileModal()"
+                    style="background: #ef4444; color: white; border: none; padding: 10px 15px; border-radius: 6px; cursor: pointer; width: 45%; font-weight: bold;">ยกเลิก</button>
+                <button onclick="saveProfile()"
+                    style="background: #10b981; color: white; border: none; padding: 10px 15px; border-radius: 6px; cursor: pointer; width: 45%; font-weight: bold;">💾
+                    บันทึก</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script src="https://unpkg.com/leaflet-routing-machine@latest/dist/leaflet-routing-machine.js"></script>
+    <script src="https://unpkg.com/leaflet.markercluster@1.4.1/dist/leaflet.markercluster.js"></script>
+
+    <script>
+        let currentUser = { current_battery: 100, username: 'Guest' };
+        let myEV = { brand: 'BYD', model: 'Atto 3 Extended', range_km: 480 };
+
+        try {
+            const savedUser = JSON.parse(localStorage.getItem('currentUser'));
+            if (savedUser) {
+                currentUser = savedUser;
+                document.getElementById('display-username').textContent = currentUser.username;
+            }
+            const savedEV = JSON.parse(localStorage.getItem('myEV'));
+            if (savedEV) myEV = savedEV;
+        } catch (e) { console.warn("Using default vehicle data"); }
+
+        if (currentUser && myEV) {
+            document.getElementById('status-car-name').textContent = `🚗 ${myEV.brand} ${myEV.model}`;
+            document.getElementById('status-battery').textContent = `${currentUser.current_battery || 100}%`;
+        }
+
+        const map = L.map('map').setView([13.7563, 100.5018], 6);
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 19, attribution: '© OpenStreetMap' }).addTo(map);
+
+        let userLocation = null;
+        let routingControl = null;
+        let loadedStations = new Set();
+        let searchMarker = null;
+        let tripOrigin = null;
+        let tripDestination = null;
+
+        const markersCluster = L.markerClusterGroup({ chunkedLoading: true, maxClusterRadius: 50 });
+        map.addLayer(markersCluster);
+
+        const evIcon = L.divIcon({
+            html: `<div style="background-color: #10b981; width: 36px; height: 36px; border-radius: 50%; border: 3px solid white; box-shadow: 0 4px 6px rgba(0,0,0,0.3); display: flex; align-items: center; justify-content: center;">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"></path></svg></div>`,
+            className: 'modern-ev-marker', iconSize: [36, 36], iconAnchor: [18, 18], popupAnchor: [0, -18]
+        });
+
+        // --- ฟังก์ชันแสดงแผงสรุปเส้นทางแบบ Timeline ---
+        function showRouteSummary(totalDistanceKm, totalTimeMinutes, waypoints) {
+            const panel = document.getElementById('route-summary-panel');
+            const timelineContainer = document.getElementById('route-timeline');
+
+            document.getElementById('summary-dist').textContent = `${totalDistanceKm} km`;
+            const hours = Math.floor(totalTimeMinutes / 60);
+            const mins = Math.round(totalTimeMinutes % 60);
+            document.getElementById('summary-time').textContent = `${hours}h ${mins}m`;
+
+            document.getElementById('summary-text').textContent = `การเดินทางระยะทางรวม ${totalDistanceKm} กม. วันนี้ขับขี่ปลอดภัยนะครับ!`;
+
+            timelineContainer.innerHTML = '';
+            waypoints.forEach(wp => {
+                let badgeHtml = '';
+                if (wp.type === 'charge') {
+                    badgeHtml = `<div style="margin-top: 5px;">
+                    <span class="timeline-badge">🔌 +${wp.chargeTimeMins} นาที</span>
+                    <span class="timeline-badge" style="background:#f3f4f6; color:#4b5563;">เป้าหมาย: ${wp.targetBattery}%</span>
+                </div>`;
+                }
+                const itemHtml = `<div class="timeline-item ${wp.type}">
+                <div style="font-size: 11px; color: #9ca3af; margin-bottom: 2px;">${wp.label}</div>
+                <div class="timeline-title">${wp.title}</div>
+                <div class="timeline-desc">${wp.desc}</div>
+                ${badgeHtml}
+            </div>`;
+                timelineContainer.insertAdjacentHTML('beforeend', itemHtml);
+            });
+            panel.classList.remove('hidden');
+        }
+
+        // --- ฟังก์ชันคำนวณและวาดเส้นทาง (อัปเกรดระบบแนะนำจุดชาร์จ) ---
+            function calculateAndDisplayRoute(destination) {
+                if (!userLocation) { alert("ยังไม่พบตำแหน่งเริ่มต้นของคุณ กรุณารอสักครู่"); return; }
+
+                tripOrigin = userLocation;
+                tripDestination = destination;
+
+                if (routingControl) map.removeControl(routingControl);
+
+                routingControl = L.Routing.control({
+                    waypoints: [tripOrigin, tripDestination],
+                    routeWhileDragging: false, addWaypoints: false, show: false,
+                    lineOptions: { styles: [{ color: '#3b82f6', opacity: 0.8, weight: 6 }] }
+                }).addTo(map);
+
+                routingControl.on('routesfound', function (event) {
+                    const routes = event.routes;
+                    const summary = routes[0].summary;
+
+                    const totalDistanceKm = parseFloat((summary.totalDistance / 1000).toFixed(1));
+                    const timeMinutes = summary.totalTime / 60;
+
+                    // ดึงข้อมูลสเปกรถและแบตเตอรี่ปัจจุบัน
+                    const currentBatt = currentUser.current_battery || 100;
+                    const evRange = myEV.range_km || 480;
+
+                    // ระยะทางที่รถวิ่งได้จริง ณ ตอนนี้
+                    let currentBatteryKm = evRange * (currentBatt / 100);
+                    let timelineWaypoints = [];
+
+                    // 1. เพิ่มข้อมูล [จุดเริ่มต้น]
+                    timelineWaypoints.push({
+                        type: 'start',
+                        label: 'จุดเริ่มต้น',
+                        title: 'ตำแหน่งปัจจุบันของคุณ',
+                        desc: `แบตเตอรี่เริ่มต้น ${currentBatt}% (วิ่งได้อีกประมาณ ${Math.round(currentBatteryKm)} กม.)`
+                    });
+
+                    // 2. ตรวจสอบว่าแบตเตอรี่พอหรือไม่?
+                    if (totalDistanceKm > currentBatteryKm) {
+                        // --- กรณีแบตไม่พอ: คำนวณจุดชาร์จ ---
+
+                        // ให้รถวิ่งจนแบตเหลือ 15% (เพื่อความปลอดภัย) แล้วค่อยแวะชาร์จ
+                        let distanceCovered = currentBatteryKm - (evRange * 0.15);
+                        let stopCount = 1;
+
+                        while (distanceCovered < totalDistanceKm) {
+                            timelineWaypoints.push({
+                                type: 'charge',
+                                label: `จุดชาร์จที่ ${stopCount}`,
+                                title: `แวะชาร์จระหว่างทาง (ช่วง กม. ที่ ${Math.round(distanceCovered)})`,
+                                desc: 'ค้นหาสถานีชาร์จบริเวณใกล้เคียงเพื่อเดินทางต่อ',
+                                chargeTimeMins: 45,
+                                targetBattery: 90
+                            });
+
+                            // สมมติว่าชาร์จถึง 90% แล้ววิ่งต่อจนแบตเหลือ 15% (ใช้แบตไป 75% ของความจุ)
+                            distanceCovered += (evRange * 0.75);
+                            stopCount++;
+                        }
+
+                        // เพิ่มข้อมูล [จุดปลายทาง]
+                        timelineWaypoints.push({
+                            type: 'end',
+                            label: 'ถึงที่หมาย',
+                            title: 'จุดหมายปลายทาง',
+                            desc: `เดินทางถึงจุดหมายอย่างปลอดภัยพร้อมใช้งานต่อ`
+                        });
+
+                    } else {
+                        // --- กรณีแบตพอ: ยิงยาวม้วนเดียวจบ ---
+                        const percentUsed = (totalDistanceKm / evRange) * 100;
+                        const batteryLeft = currentBatt - percentUsed;
+
+                        timelineWaypoints.push({
+                            type: 'end',
+                            label: 'ถึงที่หมาย',
+                            title: 'จุดหมายปลายทาง',
+                            desc: `ถึงจุดหมายด้วยแบตเตอรี่ ${batteryLeft.toFixed(1)}%`
+                        });
+                    }
+
+                    // ส่งข้อมูลทั้งหมดไปให้แผง Timeline วาด UI
+                    showRouteSummary(totalDistanceKm, timeMinutes, timelineWaypoints);
+                });
+            }
+
+        function searchLocation() {
+            const query = document.getElementById('search-input').value.trim();
+            if (!query) return;
+            const url = `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}`;
+            fetch(url).then(res => res.json()).then(data => {
+                if (data && data.length > 0) {
+                    const lat = parseFloat(data[0].lat), lon = parseFloat(data[0].lon);
+                    map.setView([lat, lon], 10);
+                    if (searchMarker) map.removeLayer(searchMarker);
+                    searchMarker = L.marker([lat, lon]).addTo(map).bindPopup(`<b>🔍 ${data[0].display_name}</b>`);
+                    calculateAndDisplayRoute(L.latLng(lat, lon));
+                } else alert("ไม่พบสถานที่");
+            });
+        }
+
+        function handleSearchKey(event) { if (event.key === 'Enter') searchLocation(); }
+
+        // --- ดึงสถานีชาร์จ Bounding Box (พร้อมดึงรายละเอียดหัวชาร์จ) ---
+            function fetchStationsInView() {
+                const bounds = map.getBounds();
+                const s = bounds.getSouth(), n = bounds.getNorth(), w = bounds.getWest(), e = bounds.getEast();
+                const ocmApiKey = 'e2235a72-1320-4010-b9a1-b54cf27381d0';
+
+                const ocmUrl = `https://api.openchargemap.io/v3/poi?key=${ocmApiKey}&boundingbox=(${n},${w}),(${s},${e})&maxresults=500`;
+                const overpassQuery = `[out:json][timeout:25];(node["amenity"="charging_station"](${s},${w},${n},${e});way["amenity"="charging_station"](${s},${w},${n},${e}););out center;`;
+
+                Promise.all([
+                    fetch(ocmUrl).then(res => res.json()).catch(() => []),
+                    fetch('https://overpass-api.de/api/interpreter', { method: 'POST', body: overpassQuery }).then(res => res.json()).catch(() => ({ elements: [] }))
+                ]).then(([ocmData, osmData]) => {
+                    const newMarkers = [];
+
+                    // 1. แกะข้อมูลจาก Open Charge Map (OCM)
+                    if (Array.isArray(ocmData)) {
+                        ocmData.forEach(station => {
+                            if (station.AddressInfo && station.AddressInfo.ID) {
+                                const id = `ocm_${station.AddressInfo.ID}`;
+                                if (!loadedStations.has(id)) {
+                                    loadedStations.add(id);
+
+                                    const title = station.AddressInfo.Title || 'สถานีชาร์จ (OCM)';
+                                    const operator = station.OperatorInfo ? station.OperatorInfo.Title : 'ไม่ระบุผู้ให้บริการ';
+
+                                    // 💡 ดึงข้อมูลสเปกหัวชาร์จจาก OCM
+                                    let connHtml = '';
+                                    if (station.Connections && station.Connections.length > 0) {
+                                        connHtml = '<ul style="margin: 5px 0; padding-left: 20px; font-size: 12px; color: #374151;">';
+                                        station.Connections.forEach(conn => {
+                                            const type = conn.ConnectionType ? conn.ConnectionType.Title : 'ไม่ระบุชนิด';
+                                            const power = conn.PowerKW ? `${conn.PowerKW} kW` : 'ไม่ระบุกำลังไฟ';
+                                            const qty = conn.Quantity ? `(${conn.Quantity} หัว)` : '';
+                                            connHtml += `<li>🔌 <b>${type}</b><br>⚡ ${power} ${qty}</li>`;
+                                        });
+                                        connHtml += '</ul>';
+                                    } else {
+                                        connHtml = '<div style="font-size: 12px; color: #9ca3af; margin-top: 5px;">ไม่มีข้อมูลหัวชาร์จ</div>';
+                                    }
+
+                                    // สร้าง UI ป๊อปอัปให้สวยงาม
+                                    const popupContent = `
+                                <div style="min-width: 200px; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;">
+                                    <h4 style="margin: 0 0 5px 0; color: #10b981; font-size: 15px;">⚡ ${title}</h4>
+                                    <div style="font-size: 12px; color: #6b7280; margin-bottom: 8px;">🏢 ${operator}</div>
+                                    <div style="background: #f3f4f6; padding: 10px; border-radius: 8px;">
+                                        <strong style="font-size: 12px; color: #1f2937;">รายละเอียดหัวชาร์จ:</strong>
+                                        ${connHtml}
+                                    </div>
+                                </div>
+                            `;
+
+                                    const marker = L.marker([station.AddressInfo.Latitude, station.AddressInfo.Longitude], { icon: evIcon })
+                                        .bindPopup(popupContent);
+                                    newMarkers.push(marker);
+                                }
+                            }
+                        });
+                    }
+
+                    // 2. แกะข้อมูลจาก OpenStreetMap (OSM)
+                    (osmData.elements || []).forEach(station => {
+                        const id = `osm_${station.id}`;
+                        if (!loadedStations.has(id)) {
+                            const lat = station.lat || (station.center && station.center.lat);
+                            const lng = station.lon || (station.center && station.center.lon);
+                            if (lat && lng) {
+                                loadedStations.add(id);
+
+                                const tags = station.tags || {};
+                                const title = tags.name || 'สถานีชาร์จ (OSM)';
+                                const operator = tags.operator || tags.brand || 'ไม่ระบุผู้ให้บริการ';
+
+                                // 💡 ดึงข้อมูลสเปกหัวชาร์จจาก OSM (OSM ข้อมูลจะกระจายอยู่ใน tags)
+                                let osmConnHtml = '<div style="font-size: 12px; color: #374151; margin-top: 5px;">';
+                                let hasConnData = false;
+
+                                if (tags['socket:type2_combo'] || tags['socket:type2']) {
+                                    if (tags['socket:type2_combo']) osmConnHtml += `🔌 CCS2: ${tags['socket:type2_combo']} หัว<br>`;
+                                    if (tags['socket:type2']) osmConnHtml += `🔌 Type 2: ${tags['socket:type2']} หัว<br>`;
+                                    if (tags['socket:chademo']) osmConnHtml += `🔌 CHAdeMO: ${tags['socket:chademo']} หัว<br>`;
+                                    if (tags['capacity']) osmConnHtml += `🚗 รองรับได้สูงสุด: ${tags['capacity']} คัน<br>`;
+                                    hasConnData = true;
+                                }
+
+                                if (!hasConnData) {
+                                    osmConnHtml += '<span style="color: #9ca3af;">ไม่มีข้อมูลหัวชาร์จเชิงลึก</span>';
+                                }
+                                osmConnHtml += '</div>';
+
+                                const popupContent = `
+                            <div style="min-width: 200px; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;">
+                                <h4 style="margin: 0 0 5px 0; color: #10b981; font-size: 15px;">⚡ ${title}</h4>
+                                <div style="font-size: 12px; color: #6b7280; margin-bottom: 8px;">🏢 ${operator}</div>
+                                <div style="background: #f3f4f6; padding: 10px; border-radius: 8px;">
+                                    <strong style="font-size: 12px; color: #1f2937;">ข้อมูลจากพื้นที่ (OSM):</strong>
+                                    ${osmConnHtml}
+                                </div>
+                            </div>
+                        `;
+
+                                const marker = L.marker([lat, lng], { icon: evIcon }).bindPopup(popupContent);
+                                newMarkers.push(marker);
+                            }
+                        }
+                    });
+
+                    if (newMarkers.length > 0) markersCluster.addLayers(newMarkers);
+                });
+            }
+
+        fetchStationsInView();
+        map.on('moveend', function () { if (map.getZoom() >= 8) fetchStationsInView(); });
+
+        map.on('locationfound', function (e) {
+            userLocation = e.latlng;
+            L.marker(userLocation).addTo(map).bindPopup(`<b>📍 จุดเริ่มต้นของคุณ</b>`).openPopup();
+            map.setView(userLocation, 12);
+        });
+
+        map.on('locationerror', function (e) {
+            userLocation = L.latLng(13.8771, 100.4118);
+            L.marker(userLocation).addTo(map).bindPopup(`<b>📍 จุดเริ่มต้น (บางใหญ่)</b>`).openPopup();
+            map.setView(userLocation, 12);
+        });
+        map.locate({ setView: false, timeout: 5000 });
+
+        map.on('click', function (e) { calculateAndDisplayRoute(e.latlng); });
+
+        document.getElementById('user-status').addEventListener('click', function () {
+            document.getElementById('profile-modal').style.display = 'flex';
+            document.getElementById('edit-brand').value = myEV.brand || 'BYD';
+            document.getElementById('edit-model').value = myEV.model || 'Atto 3';
+            document.getElementById('edit-range').value = myEV.range_km || 480;
+            document.getElementById('edit-battery').value = currentUser.current_battery || 100;
+        });
+
+        function closeProfileModal() { document.getElementById('profile-modal').style.display = 'none'; }
+        function saveProfile() {
+            myEV.brand = document.getElementById('edit-brand').value;
+            myEV.model = document.getElementById('edit-model').value;
+            myEV.range_km = parseFloat(document.getElementById('edit-range').value);
+            currentUser.current_battery = parseFloat(document.getElementById('edit-battery').value);
+            localStorage.setItem('myEV', JSON.stringify(myEV));
+            localStorage.setItem('currentUser', JSON.stringify(currentUser));
+            document.getElementById('status-car-name').textContent = `🚗 ${myEV.brand} ${myEV.model}`;
+            document.getElementById('status-battery').textContent = `${currentUser.current_battery}%`;
+            closeProfileModal();
+        }
+        function goToProfile() { window.location.href = 'profile.html'; }
+        function openGoogleMaps() {
+            if (!tripOrigin || !tripDestination) return;
+            window.open(`https://www.google.com/maps/dir/?api=1&origin=${tripOrigin.lat},${tripOrigin.lng}&destination=${tripDestination.lat},${tripDestination.lng}&travelmode=driving`, '_blank');
+        }
+        function logout() {
+            if (confirm("คุณต้องการออกจากระบบใช่หรือไม่?")) {
+                localStorage.removeItem('currentUser');
+                window.location.href = 'login.html';
+            }
+        }
+    </script>
+</body>
+
+</html>

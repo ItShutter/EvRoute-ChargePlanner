@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Edit User - Admin Control</title>
+    <style>
+        * { box-sizing: border-box; }
+        body { 
+            margin: 0; padding: 20px 0; 
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
+            display: flex; 
+            justify-content: center; 
+            align-items: center; 
+            min-height: 100vh; 
+            
+            /* ภาพพื้นหลังธีมเดียวกับระบบ */
+            background: linear-gradient(rgba(0, 0, 0, 0.5), rgba(0, 0, 0, 0.7)), 
+                        url('https://images.unsplash.com/photo-1593941707882-a5bba14938c7?q=80&w=1920&auto=format&fit=crop') no-repeat center center fixed;
+            background-size: cover;
+        }
+
+        .container { 
+            background: rgba(255, 255, 255, 0.92);
+            backdrop-filter: blur(10px);
+            padding: 35px 30px;
+            border-radius: 16px;
+            box-shadow: 0 15px 35px rgba(0,0,0,0.3);
+            width: 100%;
+            max-width: 450px;
+            border: 1px solid rgba(255, 255, 255, 0.3);
+        }
+
+        h2 { color: #1f2937; margin-top: 0; text-align: center; margin-bottom: 25px; font-size: 24px; }
+        
+        .form-group { margin-bottom: 15px; }
+        .form-group label { display: block; font-size: 13px; font-weight: bold; color: #4b5563; margin-bottom: 6px; }
+        .form-group input { 
+            width: 100%; padding: 11px 14px; border: 1px solid #d1d5db; 
+            border-radius: 8px; font-size: 14px; outline: none; background: white; transition: all 0.3s ease;
+        }
+        .form-group input:focus:not([readonly]) { 
+            border-color: #3b82f6; 
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.15); 
+        }
+        .form-group input[readonly] { background: #e5e7eb; color: #6b7280; cursor: not-allowed; }
+
+        .btn-save { 
+            width: 100%; padding: 12px; background-color: #3b82f6; color: white; 
+            border: none; border-radius: 8px; font-weight: bold; cursor: pointer; 
+            font-size: 16px; margin-top: 15px; transition: background 0.3s ease, transform 0.1s ease; 
+        }
+        .btn-save:hover { background-color: #2563eb; }
+        .btn-save:active { transform: scale(0.98); }
+
+        .link-back { text-align: center; margin-top: 20px; font-size: 14px; }
+        .link-back a { color: #3b82f6; text-decoration: none; font-weight: bold; }
+        .link-back a:hover { text-decoration: underline; }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <h2>✏️ แก้ไขข้อมูลสมาชิก</h2>
+        <form id="edit-form" onsubmit="saveEditedUser(event)">
+            <div class="form-group">
+                <label>ชื่อผู้ใช้งาน (Username):</label>
+                <input type="text" id="edit-username" readonly>
+            </div>
+            
+            <div class="form-group">
+                <label>รหัสผ่าน (Password):</label>
+                <input type="text" id="edit-password" placeholder="กรอกรหัสผ่านใหม่หรือรหัสเดิม" required>
+            </div>
+            
+            <div class="form-group">
+                <label>ยี่ห้อรถ EV (Brand):</label>
+                <input type="text" id="edit-brand" required>
+            </div>
+            
+            <div class="form-group">
+                <label>รุ่นรถ EV (Model):</label>
+                <input type="text" id="edit-model" required>
+            </div>
+            
+            <div class="form-group">
+                <label>ระยะทางสูงสุดต่อการชาร์จเต็ม (Range กม.):</label>
+                <input type="number" id="edit-range" required>
+            </div>
+            
+            <div class="form-group">
+                <label>ความจุแบตเตอรี่ (kWh):</label>
+                <input type="number" id="edit-capacity" step="0.1" required>
+            </div>
+            
+            <button type="submit" class="btn-save">💾 บันทึกข้อมูล</button>
+        </form>
+        
+        <div class="link-back">
+            <a href="admin.html">← กลับสู่หน้าจัดการแอดมิน</a>
+        </div>
+    </div>
+
+    <script>
+    // ดึงชื่อสมาชิกที่ส่งมาจาก URL
+    const urlParams = new URLSearchParams(window.location.search);
+    const targetUsername = urlParams.get('user');
+
+    document.getElementById('edit-username').value = targetUsername || 'ไม่ระบุ';
+
+    // โหลดข้อมูลผู้ใช้และรถจาก localStorage มาแสดง
+    const currentUser = JSON.parse(localStorage.getItem('currentUser')) || {};
+    const savedEV = JSON.parse(localStorage.getItem('myEV')) || { brand: 'BYD', model: 'Atto 3 Extended', range_km: 480, battery_capacity_kwh: 60.4 };
+    
+    // เติมรหัสผ่านลงในช่อง (ถ้ามีข้อมูลในระบบ)
+    document.getElementById('edit-password').value = currentUser.password || '';
+    
+    // เติมข้อมูลรถ
+    document.getElementById('edit-brand').value = savedEV.brand;
+    document.getElementById('edit-model').value = savedEV.model;
+    document.getElementById('edit-range').value = savedEV.range_km;
+    document.getElementById('edit-capacity').value = savedEV.battery_capacity_kwh;
+
+    function saveEditedUser(event) {
+        event.preventDefault();
+        
+        const password = document.getElementById('edit-password').value.trim();
+        const brand = document.getElementById('edit-brand').value;
+        const model = document.getElementById('edit-model').value;
+        const range_km = parseFloat(document.getElementById('edit-range').value);
+        const battery_capacity_kwh = parseFloat(document.getElementById('edit-capacity').value);
+
+        // อัปเดตรหัสผ่านใน currentUser
+        currentUser.password = password;
+        localStorage.setItem('currentUser', JSON.stringify(currentUser));
+
+        // อัปเดตข้อมูลรถ
+        const updatedEV = { brand, model, range_km, battery_capacity_kwh };
+        localStorage.setItem('myEV', JSON.stringify(updatedEV));
+
+        alert(`✅ บันทึกข้อมูลและรหัสผ่านของ ${targetUsername} เรียบร้อยแล้ว!`);
+        window.location.href = 'admin.html';
+    }
+    </script>
+</body>
+</html>

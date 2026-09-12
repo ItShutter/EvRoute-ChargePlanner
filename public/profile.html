@@ -1,0 +1,375 @@
+<!DOCTYPE html>
+<html lang="th">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>User Profile - EV Route Planner</title>
+    <style>
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            padding: 20px 0;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+
+            /* ภาพพื้นหลังธีมเดียวกับระบบ */
+            background: linear-gradient(rgba(0, 0, 0, 0.5), rgba(0, 0, 0, 0.7)),
+                url('https://images.unsplash.com/photo-1593941707882-a5bba14938c7?q=80&w=1920&auto=format&fit=crop') no-repeat center center fixed;
+            background-size: cover;
+        }
+
+        .container {
+            background: rgba(255, 255, 255, 0.92);
+            backdrop-filter: blur(10px);
+            padding: 35px 30px;
+            border-radius: 16px;
+            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.3);
+            width: 100%;
+            max-width: 450px;
+            border: 1px solid rgba(255, 255, 255, 0.3);
+        }
+
+        h2 {
+            color: #1f2937;
+            margin-top: 0;
+            text-align: center;
+            margin-bottom: 25px;
+            font-size: 24px;
+        }
+
+        .form-group {
+            margin-bottom: 15px;
+        }
+
+        .form-group label {
+            display: block;
+            font-size: 13px;
+            font-weight: bold;
+            color: #4b5563;
+            margin-bottom: 6px;
+        }
+
+        .form-group input,
+        .form-group select {
+            width: 100%;
+            padding: 10px 12px;
+            box-sizing: border-box;
+            border: 1px solid #d1d5db;
+            border-radius: 8px;
+            font-size: 14px;
+            outline: none;
+            background: white;
+            transition: all 0.3s ease;
+        }
+
+        .form-group input:focus:not([readonly]),
+        .form-group select:focus {
+            border-color: #10b981;
+            box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.15);
+        }
+
+        .form-group input[readonly] {
+            background: #e5e7eb;
+            color: #6b7280;
+            cursor: not-allowed;
+        }
+
+        .custom-input {
+            margin-top: 8px;
+            display: none;
+        }
+
+        .btn-save {
+            width: 100%;
+            padding: 12px;
+            background-color: #10b981;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-weight: bold;
+            cursor: pointer;
+            font-size: 16px;
+            margin-top: 15px;
+            transition: background 0.3s ease, transform 0.1s ease;
+        }
+
+        .btn-save:hover {
+            background-color: #059669;
+        }
+
+        .btn-save:active {
+            transform: scale(0.98);
+        }
+
+        .back-link {
+            text-align: center;
+            margin-top: 20px;
+            font-size: 14px;
+        }
+
+        .back-link a {
+            color: #10b981;
+            text-decoration: none;
+            font-weight: bold;
+        }
+
+        .back-link a:hover {
+            text-decoration: underline;
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="container">
+        <h2>👤 โปรไฟล์ของฉัน</h2>
+        <form id="profile-form" onsubmit="saveProfile(event)">
+            <div class="form-group">
+                <label>ชื่อผู้ใช้งาน (Username):</label>
+                <input type="text" id="profile-username" readonly>
+            </div>
+
+            <!-- ยี่ห้อรถ EV (Dropdown) -->
+            <div class="form-group">
+                <label>ยี่ห้อรถ EV (Brand):</label>
+                <select id="ev-brand-select" onchange="handleBrandChange()" required>
+                    <option value="">-- เลือกยี่ห้อรถ --</option>
+                    <option value="BYD">BYD</option>
+                    <option value="Tesla">Tesla</option>
+                    <option value="MG">MG</option>
+                    <option value="GWM / Ora">GWM / Ora</option>
+                    <option value="Neta">Neta</option>
+                    <option value="AION">AION</option>
+                    <option value="Volvo">Volvo</option>
+                    <option value="BMW">BMW</option>
+                    <option value="Porsche">Porsche</option>
+                    <option value="Audi">Audi</option>
+                    <option value="other">✏️ อื่นๆ (พิมพ์เพิ่มเอง)</option>
+                </select>
+                <input type="text" id="ev-brand-custom" class="custom-input" placeholder="พิมพ์ยี่ห้อรถของคุณ...">
+            </div>
+
+            <!-- รุ่นรถ EV (Dropdown) -->
+            <div class="form-group">
+                <label>รุ่นรถ EV (Model):</label>
+                <select id="ev-model-select" onchange="handleModelChange()" required>
+                    <option value="">-- กรุณาเลือกยี่ห้อรถก่อน --</option>
+                </select>
+                <input type="text" id="ev-model-custom" class="custom-input" placeholder="พิมพ์รุ่นรถของคุณ...">
+            </div>
+
+            <div class="form-group">
+                <label>ระยะทางสูงสุดต่อการชาร์จเต็ม (Range กม.):</label>
+                <input type="number" id="profile-range" required>
+            </div>
+
+            <div class="form-group">
+                <label>ความจุแบตเตอรี่ (kWh):</label>
+                <input type="number" id="profile-capacity" step="0.1" required>
+            </div>
+
+            <button type="submit" class="btn-save">💾 บันทึกการเปลี่ยนแปลง</button>
+        </form>
+        <div class="back-link">
+            <a href="map.html">← กลับสู่หน้าแผนที่</a>
+        </div>
+    </div>
+
+    <script>
+        // ฐานข้อมูลรุ่นรถตามยี่ห้อ (ชุดเดียวกับหน้า Register)
+        const evDatabase = {
+            "BYD": [
+                { model: "Atto 3 Extended", range: 480, capacity: 60.4 },
+                { model: "Atto 3 Standard", range: 410, capacity: 49.92 },
+                { model: "Dolphin Extended", range: 490, capacity: 60.48 },
+                { model: "Seal Performance", range: 580, capacity: 82.5 },
+                { model: "Seal Dynamic/Premium", range: 650, capacity: 82.5 }
+            ],
+            "Tesla": [
+                { model: "Model Y Rear-Wheel Drive", range: 455, capacity: 57.5 },
+                { model: "Model Y Long Range", range: 533, capacity: 75.0 },
+                { model: "Model 3 Rear-Wheel Drive", range: 513, capacity: 57.5 },
+                { model: "Model 3 Long Range", range: 629, capacity: 75.0 }
+            ],
+            "MG": [
+                { model: "MG4 Electric Standard", range: 350, capacity: 49.0 },
+                { model: "MG4 Electric Long Range", range: 540, capacity: 64.0 },
+                { model: "MG ZS EV", range: 403, capacity: 50.3 },
+                { model: "MG MAXUS 7", range: 480, capacity: 90.0 }
+            ],
+            "GWM / Ora": [
+                { model: "Ora Good Cat 400 PRO", range: 400, capacity: 47.8 },
+                { model: "Ora Good Cat 500 ULTRA", range: 500, capacity: 63.1 },
+                { model: "Ora 07 Performance", range: 550, capacity: 83.5 }
+            ],
+            "Neta": [
+                { model: "Neta V / V-II", range: 384, capacity: 40.7 },
+                { model: "Neta X", range: 480, capacity: 62.0 }
+            ],
+            "AION": [
+                { model: "AION Y Plus 490", range: 490, capacity: 63.2 },
+                { model: "AION Y Plus 580", range: 580, capacity: 68.3 },
+                { model: "AION ES", range: 442, capacity: 55.2 }
+            ],
+            "Volvo": [
+                { model: "EX30 Single Motor Extended", range: 480, capacity: 69.0 },
+                { model: "XC40 Recharge Twin", range: 500, capacity: 82.0 },
+                { model: "C40 Recharge Twin", range: 507, capacity: 82.0 }
+            ],
+            "BMW": [
+                { model: "iX3 M Sport", range: 460, capacity: 74.0 },
+                { model: "i4 eDrive35", range: 483, capacity: 70.2 },
+                { model: "iX xDrive40", range: 425, capacity: 76.6 }
+            ],
+            "Porsche": [
+                { model: "Taycan 4S", range: 512, capacity: 89.0 },
+                { model: "Taycan Turbo", range: 557, capacity: 105.0 }
+            ],
+            "Audi": [
+                { model: "Q8 e-tron 50", range: 491, capacity: 95.0 },
+                { model: "e-tron GT", range: 528, capacity: 93.4 }
+            ]
+        };
+
+        // โหลดข้อมูลเดิมขึ้นมาแสดง
+        const currentUser = JSON.parse(localStorage.getItem('currentUser'));
+        const myEV = JSON.parse(localStorage.getItem('myEV'));
+
+        if (currentUser) {
+            document.getElementById('profile-username').value = currentUser.username || '';
+        }
+
+        if (myEV && myEV.brand) {
+            const brandSelect = document.getElementById('ev-brand-select');
+            const brandCustom = document.getElementById('ev-brand-custom');
+
+            // เช็คว่าเป็นยี่ห้อในลิสต์หรือพิมพ์เอง
+            if (evDatabase[myEV.brand]) {
+                brandSelect.value = myEV.brand;
+                handleBrandChange(myEV.model, myEV.range_km, myEV.battery_capacity_kwh);
+            } else {
+                brandSelect.value = 'other';
+                brandCustom.style.display = 'block';
+                brandCustom.value = myEV.brand;
+                brandCustom.required = true;
+                handleBrandChange(myEV.model, myEV.range_km, myEV.battery_capacity_kwh);
+            }
+        }
+
+        function handleBrandChange(preselectModel = null, preselectRange = null, preselectCap = null) {
+            const brandSelect = document.getElementById('ev-brand-select');
+            const brandCustom = document.getElementById('ev-brand-custom');
+            const modelSelect = document.getElementById('ev-model-select');
+            const modelCustom = document.getElementById('ev-model-custom');
+
+            if (!preselectModel) {
+                document.getElementById('profile-range').value = '';
+                document.getElementById('profile-capacity').value = '';
+            }
+
+            if (brandSelect.value === 'other') {
+                brandCustom.style.display = 'block';
+                brandCustom.required = true;
+
+                modelSelect.innerHTML = '<option value="other">✏️ พิมพ์รุ่นรถเอง</option>';
+                modelSelect.value = 'other';
+                modelCustom.style.display = 'block';
+                modelCustom.required = true;
+                if (preselectModel) modelCustom.value = preselectModel;
+            } else {
+                brandCustom.style.display = 'none';
+                brandCustom.required = false;
+                brandCustom.value = '';
+
+                modelSelect.innerHTML = '<option value="">-- กรุณาเลือกรุ่นรถ --</option>';
+                const models = evDatabase[brandSelect.value] || [];
+
+                models.forEach(item => {
+                    const opt = document.createElement('option');
+                    opt.value = item.model;
+                    opt.textContent = item.model;
+                    modelSelect.appendChild(opt);
+                });
+
+                const otherOpt = document.createElement('option');
+                otherOpt.value = 'other';
+                otherOpt.textContent = '✏️ อื่นๆ (พิมพ์เพิ่มเอง)';
+                modelSelect.appendChild(otherOpt);
+
+                if (preselectModel) {
+                    // เช็คว่าเป็นรุ่นในลิสต์หรือพิมพ์เอง
+                    const found = models.find(m => m.model === preselectModel);
+                    if (found) {
+                        modelSelect.value = preselectModel;
+                        modelCustom.style.display = 'none';
+                        document.getElementById('profile-range').value = preselectRange || found.range;
+                        document.getElementById('profile-capacity').value = preselectCap || found.capacity;
+                    } else {
+                        modelSelect.value = 'other';
+                        modelCustom.style.display = 'block';
+                        modelCustom.value = preselectModel;
+                        if (preselectRange) document.getElementById('profile-range').value = preselectRange;
+                        if (preselectCap) document.getElementById('profile-capacity').value = preselectCap;
+                    }
+                } else {
+                    modelCustom.style.display = 'none';
+                    modelCustom.required = false;
+                    modelCustom.value = '';
+                }
+            }
+        }
+
+        function handleModelChange() {
+            const brandSelect = document.getElementById('ev-brand-select').value;
+            const brandVal = brandSelect === 'other' ? document.getElementById('ev-brand-custom').value : brandSelect;
+            const modelSelect = document.getElementById('ev-model-select');
+            const modelCustom = document.getElementById('ev-model-custom');
+
+            if (modelSelect.value === 'other') {
+                modelCustom.style.display = 'block';
+                modelCustom.required = true;
+                document.getElementById('profile-range').value = '';
+                document.getElementById('profile-capacity').value = '';
+            } else {
+                modelCustom.style.display = 'none';
+                modelCustom.required = false;
+                modelCustom.value = '';
+
+                const models = evDatabase[brandVal] || [];
+                const found = models.find(m => m.model === modelSelect.value);
+                if (found) {
+                    document.getElementById('profile-range').value = found.range;
+                    document.getElementById('profile-capacity').value = found.capacity;
+                }
+            }
+        }
+
+        function saveProfile(event) {
+            event.preventDefault();
+
+            const brandSelect = document.getElementById('ev-brand-select').value;
+            const brand = brandSelect === 'other' ? document.getElementById('ev-brand-custom').value.trim() : brandSelect;
+
+            const modelSelect = document.getElementById('ev-model-select').value;
+            const model = modelSelect === 'other' ? document.getElementById('ev-model-custom').value.trim() : modelSelect;
+
+            const range_km = parseFloat(document.getElementById('profile-range').value);
+            const battery_capacity_kwh = parseFloat(document.getElementById('profile-capacity').value);
+
+            const updatedEV = { brand, model, range_km, battery_capacity_kwh };
+            localStorage.setItem('myEV', JSON.stringify(updatedEV));
+
+            alert('💾 บันทึกข้อมูลโปรไฟล์สำเร็จ!');
+            window.location.href = 'map.html';
+        }
+    </script>
+</body>
+
+</html>
