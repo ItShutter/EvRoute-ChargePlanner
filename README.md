@@ -49,6 +49,7 @@ CREATE TABLE users (
 -- บัญชีแอดมินเริ่มต้น
 INSERT INTO users (username, password, role, ev_brand, ev_model, ev_range_km, ev_capacity_kwh) 
 VALUES ('admin', '123456', 'admin', 'BYD', 'Atto 3 Extended', 480, 60.4);
+```
 
 2. การรันเซิร์ฟเวอร์ (Node.js)
 
