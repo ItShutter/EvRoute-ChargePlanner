@@ -60,13 +60,12 @@ VALUES ('admin', '123456', 'admin', 'BYD', 'Atto 3 Extended', 480, 60.4);
     2.3 เปิด Terminal หรือ Command Prompt แล้ว cd เข้าไปที่โฟลเดอร์ของโปรเจกต์
 
     2.4 ติดตั้งแพ็กเกจ (Dependencies) ที่จำเป็นทั้งหมดด้วยคำสั่ง:
-        ```bash
+     ```bash
         npm install
-        ```
-
+     ```
     2.5 สั่งรันเซิร์ฟเวอร์ด้วยคำสั่ง:
-        ```Bash
+     ```Bash
         node index.js
-        ```
+     ```
 
     2.6 เปิดเว็บเบราว์เซอร์ และพิมพ์ URL เพื่อเข้าใช้งานระบบที่: http://localhost:3000 (หรือพอร์ตที่แสดงใน Terminal)
