@@ -769,7 +769,7 @@
             document.getElementById('status-battery').textContent = `${currentUser.current_battery}%`;
             closeProfileModal();
         }
-        function goToProfile() { window.location.href = 'profile.html'; }
+        function goToProfile() { window.location.href = "/profile"; }
         function openGoogleMaps() {
             if (!tripOrigin || !tripDestination) return;
             window.open(`https://www.google.com/maps/dir/?api=1&origin=${tripOrigin.lat},${tripOrigin.lng}&destination=${tripDestination.lat},${tripDestination.lng}&travelmode=driving`, '_blank');
@@ -777,7 +777,7 @@
         function logout() {
             if (confirm("คุณต้องการออกจากระบบใช่หรือไม่?")) {
                 localStorage.removeItem('currentUser');
-                window.location.href = 'login.html';
+                window.location.href = "/login";
             }
         }
         
