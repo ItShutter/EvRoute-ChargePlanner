@@ -600,7 +600,7 @@
 
         function handleSearchKey(event) { if (event.key === 'Enter') searchLocation(); }
 
-        // --- ดึงสถานีชาร์จ Bounding Box (พร้อมดึงรายละเอียดหัวชาร์จ) ---
+        // --- ดึงสถานีชาร์จ Bounding Box (อัปเกรดข้อมูลแบบละเอียดสุดๆ) ---
             function fetchStationsInView() {
                 const bounds = map.getBounds();
                 const s = bounds.getSouth(), n = bounds.getNorth(), w = bounds.getWest(), e = bounds.getEast();
@@ -615,43 +615,57 @@
                 ]).then(([ocmData, osmData]) => {
                     const newMarkers = [];
 
-                    // 1. แกะข้อมูลจาก Open Charge Map (OCM)
+                    // 1. แกะข้อมูลจาก Open Charge Map (OCM) แบบละเอียด
                     if (Array.isArray(ocmData)) {
                         ocmData.forEach(station => {
                             if (station.AddressInfo && station.AddressInfo.ID) {
-                                const id = `ocm_${station.AddressInfo.ID}`;
+                                const id = `ocm_${station.ID || station.AddressInfo.ID}`;
                                 if (!loadedStations.has(id)) {
                                     loadedStations.add(id);
 
-                                    const title = station.AddressInfo.Title || 'สถานีชาร์จ (OCM)';
+                                    // ดึงชื่อสถานีและผู้ให้บริการ
+                                    const title = station.AddressInfo.Title || 'สถานีชาร์จ EV';
                                     const operator = station.OperatorInfo ? station.OperatorInfo.Title : 'ไม่ระบุผู้ให้บริการ';
 
-                                    // 💡 ดึงข้อมูลสเปกหัวชาร์จจาก OCM
-                                    let connHtml = '';
+                                    // ข้อมูลการเข้าถึงและค่าบริการ (เหมือนในภาพ)
+                                    const usageType = station.UsageType ? station.UsageType.Title : 'ไม่ระบุเงื่อนไขการใช้งาน';
+                                    const usageCost = station.UsageCost ? station.UsageCost : 'ไม่ระบุค่าบริการ (Not specified)';
+
+                                    // 💡 สร้างการ์ดรายละเอียดหัวชาร์จ (Connectors & Power)
+                                    let connHtml = '<div style="margin-top: 10px; display: flex; flex-direction: column; gap: 8px;">';
                                     if (station.Connections && station.Connections.length > 0) {
-                                        connHtml = '<ul style="margin: 5px 0; padding-left: 20px; font-size: 12px; color: #374151;">';
                                         station.Connections.forEach(conn => {
                                             const type = conn.ConnectionType ? conn.ConnectionType.Title : 'ไม่ระบุชนิด';
-                                            const power = conn.PowerKW ? `${conn.PowerKW} kW` : 'ไม่ระบุกำลังไฟ';
-                                            const qty = conn.Quantity ? `(${conn.Quantity} หัว)` : '';
-                                            connHtml += `<li>🔌 <b>${type}</b><br>⚡ ${power} ${qty}</li>`;
-                                        });
-                                        connHtml += '</ul>';
-                                    } else {
-                                        connHtml = '<div style="font-size: 12px; color: #9ca3af; margin-top: 5px;">ไม่มีข้อมูลหัวชาร์จ</div>';
-                                    }
+                                            const power = conn.PowerKW ? `${conn.PowerKW} kW` : 'กำลังไฟไม่ระบุ';
+                                            const qty = conn.Quantity ? `${conn.Quantity} หัว` : '';
+                                            const current = conn.CurrentType ? conn.CurrentType.Title : ''; // ดึงค่า DC หรือ AC
+                                            const status = conn.StatusType ? conn.StatusType.Title : 'Operational';
 
-                                    // สร้าง UI ป๊อปอัปให้สวยงาม
+                                            // จัดกล่อง UI ให้คล้ายกับเว็บ OCM
+                                            connHtml += `
+                                        <div style="background: #ecfdf5; border: 1px solid #a7f3d0; padding: 10px; border-radius: 8px;">
+                                            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px;">
+                                                <strong style="color: #065f46; font-size: 13px;">🔌 ${type} ${current ? `<span style="color:#6b7280; font-size:11px;">(${current})</span>` : ''}</strong>
+                                                <span style="background: #10b981; color: white; padding: 2px 8px; border-radius: 12px; font-size: 12px; font-weight:bold;">${power}</span>
+                                            </div>
+                                            <div style="font-size: 11px; color: #047857;">จำนวน: ${qty} | สถานะ: ${status}</div>
+                                        </div>`;
+                                        });
+                                    } else {
+                                        connHtml += '<div style="font-size: 12px; color: #9ca3af; text-align: center;">ไม่มีข้อมูลหัวชาร์จ</div>';
+                                    }
+                                    connHtml += '</div>';
+
+                                    // ประกอบร่าง UI ป๊อปอัป
                                     const popupContent = `
-                                <div style="min-width: 200px; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;">
-                                    <h4 style="margin: 0 0 5px 0; color: #10b981; font-size: 15px;">⚡ ${title}</h4>
-                                    <div style="font-size: 12px; color: #6b7280; margin-bottom: 8px;">🏢 ${operator}</div>
-                                    <div style="background: #f3f4f6; padding: 10px; border-radius: 8px;">
-                                        <strong style="font-size: 12px; color: #1f2937;">รายละเอียดหัวชาร์จ:</strong>
-                                        ${connHtml}
+                                    <div style="min-width: 250px; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;">
+                                        <h4 style="margin: 0 0 5px 0; color: #10b981; font-size: 15px; border-bottom: 2px solid #ecfdf5; padding-bottom: 5px; line-height: 1.3;">⚡ ${title}</h4>
+                                        <div style="font-size: 12px; color: #6b7280; margin-bottom: 4px;">🏢 <b>Operator:</b> ${operator}</div>
+                                        <div style="font-size: 11px; color: #6b7280; margin-bottom: 8px;">💳 <b>Access:</b> ${usageType}<br>💰 <b>Cost:</b> ${usageCost}</div>
+                                        <div style="font-size: 13px; font-weight: bold; color: #1f2937; margin-top: 10px;">Connectors & power:</div>
+                                        ${contentsHtml = connHtml}
                                     </div>
-                                </div>
-                            `;
+                                `;
 
                                     const marker = L.marker([station.AddressInfo.Latitude, station.AddressInfo.Longitude], { icon: evIcon })
                                         .bindPopup(popupContent);
@@ -661,7 +675,7 @@
                         });
                     }
 
-                    // 2. แกะข้อมูลจาก OpenStreetMap (OSM)
+                    // 2. แกะข้อมูลจาก OpenStreetMap (OSM) แบบปรับปรุงการหาชื่อ
                     (osmData.elements || []).forEach(station => {
                         const id = `osm_${station.id}`;
                         if (!loadedStations.has(id)) {
@@ -669,38 +683,43 @@
                             const lng = station.lon || (station.center && station.center.lon);
                             if (lat && lng) {
                                 loadedStations.add(id);
-
                                 const tags = station.tags || {};
-                                const title = tags.name || 'สถานีชาร์จ (OSM)';
+
+                                // อัปเกรดให้พยายามดึงชื่อจาก tags อื่นๆ ด้วยถ้าไม่มีชื่อตรงๆ
+                                let title = tags.name || tags['name:en'] || tags.brand || tags.operator || 'สถานีชาร์จ (ไม่มีชื่อ)';
+                                if (title === tags.brand || title === tags.operator) {
+                                    title = `สถานีชาร์จ ${title}`;
+                                }
                                 const operator = tags.operator || tags.brand || 'ไม่ระบุผู้ให้บริการ';
 
-                                // 💡 ดึงข้อมูลสเปกหัวชาร์จจาก OSM (OSM ข้อมูลจะกระจายอยู่ใน tags)
-                                let osmConnHtml = '<div style="font-size: 12px; color: #374151; margin-top: 5px;">';
+                                let osmConnHtml = '<div style="margin-top: 10px; display: flex; flex-direction: column; gap: 8px;">';
                                 let hasConnData = false;
 
-                                if (tags['socket:type2_combo'] || tags['socket:type2']) {
-                                    if (tags['socket:type2_combo']) osmConnHtml += `🔌 CCS2: ${tags['socket:type2_combo']} หัว<br>`;
-                                    if (tags['socket:type2']) osmConnHtml += `🔌 Type 2: ${tags['socket:type2']} หัว<br>`;
-                                    if (tags['socket:chademo']) osmConnHtml += `🔌 CHAdeMO: ${tags['socket:chademo']} หัว<br>`;
-                                    if (tags['capacity']) osmConnHtml += `🚗 รองรับได้สูงสุด: ${tags['capacity']} คัน<br>`;
+                                if (tags['socket:type2_combo'] || tags['socket:type2'] || tags['socket:chademo']) {
                                     hasConnData = true;
+                                    const createOsmBadge = (name, count) => `
+                                    <div style="background: #f3f4f6; border: 1px solid #d1d5db; padding: 8px; border-radius: 8px; font-size: 12px; color: #374151;">
+                                        🔌 <b>${name}</b>: ${count} หัว
+                                    </div>`;
+
+                                    if (tags['socket:type2_combo']) osmConnHtml += createOsmBadge('CCS2 (DC)', tags['socket:type2_combo']);
+                                    if (tags['socket:type2']) osmConnHtml += createOsmBadge('Type 2 (AC)', tags['socket:type2']);
+                                    if (tags['socket:chademo']) osmConnHtml += createOsmBadge('CHAdeMO', tags['socket:chademo']);
                                 }
 
                                 if (!hasConnData) {
-                                    osmConnHtml += '<span style="color: #9ca3af;">ไม่มีข้อมูลหัวชาร์จเชิงลึก</span>';
+                                    osmConnHtml += '<div style="font-size: 12px; color: #9ca3af; text-align: center;">ไม่มีข้อมูลหัวชาร์จเชิงลึก</div>';
                                 }
                                 osmConnHtml += '</div>';
 
                                 const popupContent = `
-                            <div style="min-width: 200px; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;">
-                                <h4 style="margin: 0 0 5px 0; color: #10b981; font-size: 15px;">⚡ ${title}</h4>
-                                <div style="font-size: 12px; color: #6b7280; margin-bottom: 8px;">🏢 ${operator}</div>
-                                <div style="background: #f3f4f6; padding: 10px; border-radius: 8px;">
-                                    <strong style="font-size: 12px; color: #1f2937;">ข้อมูลจากพื้นที่ (OSM):</strong>
+                                <div style="min-width: 220px; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;">
+                                    <h4 style="margin: 0 0 5px 0; color: #3b82f6; font-size: 14px; border-bottom: 2px solid #eff6ff; padding-bottom: 5px;">📍 ${title} <span style="font-size:10px; color:#9ca3af;">(OSM)</span></h4>
+                                    <div style="font-size: 12px; color: #6b7280; margin-bottom: 8px;">🏢 <b>Operator:</b> ${operator}</div>
+                                    <div style="font-size: 13px; font-weight: bold; color: #1f2937;">รายละเอียดจากพื้นที่:</div>
                                     ${osmConnHtml}
                                 </div>
-                            </div>
-                        `;
+                            `;
 
                                 const marker = L.marker([lat, lng], { icon: evIcon }).bindPopup(popupContent);
                                 newMarkers.push(marker);
@@ -711,7 +730,7 @@
                     if (newMarkers.length > 0) markersCluster.addLayers(newMarkers);
                 });
             }
-
+            
         fetchStationsInView();
         map.on('moveend', function () { if (map.getZoom() >= 8) fetchStationsInView(); });
 
