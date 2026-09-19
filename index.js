@@ -15,7 +15,7 @@ const pool = new Pool({
     port: 5432,
 });
 
-app.use(express.static(path.join(__dirname, 'public')));
+app.use(express.static(path.join(__dirname, 'public'), { extensions: ['html'] }));
 
 // 1. API ดึงรุ่นรถจากส่วนกลางไปแสดงที่หน้าเว็บ
 app.get('/api/ev-models', async (req, res) => {
