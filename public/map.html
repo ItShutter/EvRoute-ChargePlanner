@@ -151,25 +151,29 @@
             color: #4b5563;
         }
 
-        /* --- CSS สำหรับแผงสรุปเส้นทางแบบ Timeline --- */
+        /* --- CSS สำหรับแผงสรุปเส้นทาง (ปรับเป็นกล่องมุมซ้ายล่าง) --- */
         .bottom-panel {
             position: absolute;
-            bottom: 0;
-            left: 0;
-            right: 0;
+            bottom: 25px;       /* ยกลอยขึ้นจากขอบล่าง 25px */
+            left: 25px;         /* ขยับให้ชิดซ้าย 25px */
+            right: auto;        /* ยกเลิกการขยายเต็มจอ */
+            width: 380px;       /* กำหนดความกว้างของกล่องให้พอดี */
+            max-width: 90vw;    /* ป้องกันกล่องล้นในหน้าจอขนาดเล็ก */
             background: #ffffff;
-            border-radius: 24px 24px 0 0;
+            border-radius: 20px; /* ปรับมุมให้มนทั้ง 4 ด้าน */
             padding: 20px 25px;
-            box-shadow: 0 -10px 25px rgba(0, 0, 0, 0.15);
+            box-shadow: 0 8px 30px rgba(0, 0, 0, 0.15); /* เพิ่มเงาให้กล่องลอยมีมิติ */
             z-index: 1000;
-            max-height: 50vh;
+            max-height: 65vh;   /* จำกัดความสูง ถ้ารายการยาวเกินไปจะเกิด Scroll bar */
             overflow-y: auto;
-            transition: transform 0.3s ease;
+            transition: transform 0.3s ease, opacity 0.3s ease;
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
         }
 
+        /* แอนิเมชันเวลาซ่อนกล่อง */
         .bottom-panel.hidden {
-            transform: translateY(120%);
+            transform: translateY(150%);
+            opacity: 0;
         }
 
         .panel-header {
@@ -289,53 +293,43 @@
             margin-right: 5px;
         }
 
-        /* ปุ่มนำทางที่ลอยอยู่เหนือแผงด้านล่าง */
-        .google-map-btn-floating {
-        position: sticky; /* เปลี่ยนเป็น sticky */
-        bottom: 20px;
-        margin: 10px auto 20px auto; /* จัดกึ่งกลางอัตโนมัติด้วย margin */
-        
-        background: #4285F4;
-        color: white;
-        border: none;
-        padding: 12px 25px;
-        border-radius: 30px;
-        cursor: pointer;
-        font-size: 16px;
-        font-weight: bold;
-        box-shadow: 0 4px 15px rgba(66, 133, 244, 0.4);
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        gap: 10px;
-        z-index: 1001;
-        transition: all 0.2s ease;
-        width: 80%;
-        max-width: 350px;
-    }
-
-    .google-map-btn-floating:hover {
-        background: #3367D6;
-        transform: scale(1.05); /* เอา translateX(-50%) ของเดิมออกไป */
-    }
-
-    /* --- 📱 CSS สำหรับจัดระเบียบหน้าจอมือถือโดยเฉพาะ --- */
-        @media screen and (max-width: 768px) {
-            /* ปรับขนาดช่องค้นหาไม่ให้ล้นขอบ */
-            #top-left-search {
-                left: 55px;
-                right: 15px;
-                width: auto;
+        /* ปรับปุ่มนำทาง Google Maps ให้เล็กลงและจัดกึ่งกลาง */
+            .google-map-btn-floating {
+                position: relative; /* เปลี่ยนจาก sticky เป็น relative เพื่อให้อยู่ท้ายสุดของเนื้อหาปกติ */
+                margin: 25px auto 5px auto; /* จัดกึ่งกลางอัตโนมัติ และดันระยะห่างด้านบน */
+                background: #4285F4;
+                color: white;
+                border: none;
+                padding: 10px 20px; /* ลดระยะขอบด้านในให้ปุ่มดูเพรียวขึ้น */
+                border-radius: 25px; 
+                cursor: pointer;
+                font-size: 14px; /* ลดขนาดฟอนต์ลงเล็กน้อย */
+                font-weight: bold;
+                box-shadow: 0 4px 12px rgba(66, 133, 244, 0.3);
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                gap: 8px;
+                width: fit-content; /* 💡 จุดสำคัญ: สั่งให้ความกว้างปุ่มหดลงพอดีกับข้อความ */
+                transition: all 0.2s ease;
             }
-            
-            /* ดันแผงข้อมูล User ให้ร่นลงมาอยู่ใต้ช่องค้นหา */
-            #top-right-panel {
-                top: 80px; 
-                left: 55px;
-                right: 15px;
-                width: auto;
+
+            .google-map-btn-floating:hover {
+                background: #3367D6;
+                transform: scale(1.05);
             }
-        }
+
+        /* 📱 สำหรับหน้าจอมือถือ (ปรับให้กลับมาเป็นแบบ Drawer เต็มจอด้านล่างเหมือนเดิมเพื่อให้อ่านง่าย) */
+            @media screen and (max-width: 768px) {
+                .bottom-panel {
+                    bottom: 0;
+                    left: 0;
+                    width: 100%;
+                    max-width: 100%;
+                    border-radius: 24px 24px 0 0;
+                    max-height: 50vh;
+                }
+            }
         
             #route-summary-panel {
             /* ปรับพื้นหลังให้ไล่สีเขียวอ่อนๆ สบายตา สไตล์แอปยุคใหม่ */
@@ -456,6 +450,20 @@
         L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 19, attribution: '© OpenStreetMap' }).addTo(map);
 
         let userLocation = null;
+        let chargeMarkers = [];
+        const chargeStopIcon = L.icon({
+            iconUrl: 'https://cdn-icons-png.flaticon.com/256/13458/13458710.png',
+            iconSize: [60, 60],   // ขนาดความกว้าง x สูง ของไอคอน (ปรับให้เล็กลงได้ เช่น [35, 35])
+            iconAnchor: [30, 60],  // จุดศูนย์กลางที่ปักลงบนแผนที่ (ถ้าแก้ iconSize ต้องแก้ตรงนี้ให้เป็นครึ่งนึงของแกน X ด้วย)
+            popupAnchor: [0, -60]   // จุดที่กล่องข้อความเด้งขึ้นมา
+        });
+       // ไอคอนสำหรับกรณีหาปั๊มชาร์จไม่เจอ (หมุดสีแดง/สัญลักษณ์เตือน)
+        const warningStopIcon = L.icon({
+            iconUrl: 'https://cdn-icons-png.flaticon.com/512/564/564619.png',
+            iconSize: [35, 35],
+            iconAnchor: [17, 35],
+            popupAnchor: [0, -35]
+        });
         let routingControl = null;
         let loadedStations = new Set();
         let searchMarker = null;
@@ -504,7 +512,21 @@
             panel.classList.remove('hidden');
         }
 
-        // --- ฟังก์ชันคำนวณและวาดเส้นทาง (อัปเกรดระบบแนะนำจุดชาร์จ) ---
+        // ฟังก์ชันช่วยหาพิกัด LatLng ตามระยะทางจริง (กิโลเมตร) บนแนวเส้นทาง
+            function getPointAtDistance(coords, targetKm) {
+                let accumulatedMeters = 0;
+                const targetMeters = targetKm * 1000;
+                for (let i = 0; i < coords.length - 1; i++) {
+                    const d = coords[i].distanceTo(coords[i + 1]);
+                    if (accumulatedMeters + d >= targetMeters) {
+                        return coords[i];
+                    }
+                    accumulatedMeters += d;
+                }
+                return coords[coords.length - 1];
+            }
+
+            // ฟังก์ชันคำนวณและวางแผนจุดแวะชาร์จตลอดเส้นทาง
             function calculateAndDisplayRoute(destination) {
                 if (!userLocation) { alert("ยังไม่พบตำแหน่งเริ่มต้นของคุณ กรุณารอสักครู่"); return; }
 
@@ -519,74 +541,149 @@
                     lineOptions: { styles: [{ color: '#3b82f6', opacity: 0.8, weight: 6 }] }
                 }).addTo(map);
 
-                routingControl.on('routesfound', function (event) {
+                routingControl.on('routesfound', async function (event) {
                     const routes = event.routes;
                     const summary = routes[0].summary;
+                    const routeCoords = routes[0].coordinates;
 
                     const totalDistanceKm = parseFloat((summary.totalDistance / 1000).toFixed(1));
                     const timeMinutes = summary.totalTime / 60;
 
-                    // ดึงข้อมูลสเปกรถและแบตเตอรี่ปัจจุบัน
+                    // เคลียร์หมุดเดิมออก
+                    chargeMarkers.forEach(marker => map.removeLayer(marker));
+                    chargeMarkers = [];
+
                     const currentBatt = currentUser.current_battery || 100;
                     const evRange = myEV.range_km || 480;
-
-                    // ระยะทางที่รถวิ่งได้จริง ณ ตอนนี้
                     let currentBatteryKm = evRange * (currentBatt / 100);
                     let timelineWaypoints = [];
 
-                    // 1. เพิ่มข้อมูล [จุดเริ่มต้น]
                     timelineWaypoints.push({
-                        type: 'start',
-                        label: 'จุดเริ่มต้น',
-                        title: 'ตำแหน่งปัจจุบันของคุณ',
+                        type: 'start', label: 'จุดเริ่มต้น', title: 'ตำแหน่งปัจจุบันของคุณ',
                         desc: `แบตเตอรี่เริ่มต้น ${currentBatt}% (วิ่งได้อีกประมาณ ${Math.round(currentBatteryKm)} กม.)`
                     });
 
-                    // 2. ตรวจสอบว่าแบตเตอรี่พอหรือไม่?
                     if (totalDistanceKm > currentBatteryKm) {
-                        // --- กรณีแบตไม่พอ: คำนวณจุดชาร์จ ---
-
-                        // ให้รถวิ่งจนแบตเหลือ 15% (เพื่อความปลอดภัย) แล้วค่อยแวะชาร์จ
-                        let distanceCovered = currentBatteryKm - (evRange * 0.15);
+                        const ocmApiKey = 'e2235a72-1320-4010-b9a1-b54cf27381d0';
+                        let currentPosKm = 0;
+                        let availableKm = currentBatteryKm;
                         let stopCount = 1;
 
-                        while (distanceCovered < totalDistanceKm) {
-                            timelineWaypoints.push({
-                                type: 'charge',
-                                label: `จุดชาร์จที่ ${stopCount}`,
-                                title: `แวะชาร์จระหว่างทาง (ช่วง กม. ที่ ${Math.round(distanceCovered)})`,
-                                desc: 'ค้นหาสถานีชาร์จบริเวณใกล้เคียงเพื่อเดินทางต่อ',
-                                chargeTimeMins: 45,
-                                targetBattery: 90
-                            });
+                        // คำนวณทีละช่วงจนกว่าจะถึงจุดหมาย
+                        while (currentPosKm + availableKm < totalDistanceKm) {
+                            // เผื่อระยะปลอดภัย 60 กม. (ช่วง 50-80 กม. ก่อนแบตหมด)
+                            const safeTargetKm = currentPosKm + availableKm - 60;
+                            let stationFound = null;
 
-                            // สมมติว่าชาร์จถึง 90% แล้ววิ่งต่อจนแบตเหลือ 15% (ใช้แบตไป 75% ของความจุ)
-                            distanceCovered += (evRange * 0.75);
+                            // สแกนจากจุดเป้าหมาย และสแกนถอยหลังบนเส้นทาง (-15 กม., -30 กม., -45 กม.)
+                            const scanOffsets = [0, -15, -30, -45];
+                            for (const offset of scanOffsets) {
+                                const scanKm = safeTargetKm + offset;
+                                if (scanKm <= currentPosKm) break;
+
+                                const scanPoint = getPointAtDistance(routeCoords, scanKm);
+                                try {
+                                    // ค้นหาสถานีในรัศมีเบี่ยงออกจากเส้นทางไม่เกิน 30 กม.
+                                    const url = `https://api.openchargemap.io/v3/poi?key=${ocmApiKey}&latitude=${scanPoint.lat}&longitude=${scanPoint.lng}&distance=30&distanceunit=KM&maxresults=5`;
+                                    const res = await fetch(url);
+                                    const data = await res.json();
+
+                                    if (data && data.length > 0) {
+                                        stationFound = {
+                                            data: data[0],
+                                            atKm: Math.round(scanKm)
+                                        };
+                                        break; // พบสถานีที่เหมาะสมแล้ว ออกจากลูปสแกน
+                                    }
+                                } catch (err) {
+                                    console.error("OCM Fetch error:", err);
+                                }
+                            }
+
+                            if (stationFound) {
+                                const st = stationFound.data;
+                                const stLat = st.AddressInfo.Latitude;
+                                const stLng = st.AddressInfo.Longitude;
+                                const stTitle = st.AddressInfo.Title || 'สถานีชาร์จ EV';
+                                const stOperator = st.OperatorInfo ? st.OperatorInfo.Title : 'ไม่ระบุผู้ให้บริการ';
+
+                                // ปักหมุดสถานีจริงลงบนแผนที่
+                                const marker = L.marker([stLat, stLng], { icon: chargeStopIcon })
+                                    .addTo(map)
+                                    .bindPopup(`
+                            <div style="text-align: center; font-family: 'Segoe UI', sans-serif;">
+                                <b style="color: #eab308; font-size: 16px;">⚡ จุดแวะชาร์จที่ ${stopCount}</b><br>
+                                <strong style="color: #1f2937;">${stTitle}</strong><br>
+                                <span style="color: #6b7280; font-size: 12px;">ผู้ให้บริการ: ${stOperator}</span><br>
+                                <span style="color: #10b981; font-size: 12px;">บนเส้นทางช่วง กม. ที่ ${stationFound.atKm}</span>
+                            </div>
+                        `);
+                                chargeMarkers.push(marker);
+
+                                timelineWaypoints.push({
+                                    type: 'charge',
+                                    label: `จุดชาร์จที่ ${stopCount}`,
+                                    title: `แวะชาร์จที่ ${stTitle}`,
+                                    desc: `ผู้ให้บริการ: ${stOperator} (ช่วง กม. ที่ ${stationFound.atKm})`,
+                                    chargeTimeMins: 45,
+                                    targetBattery: 90
+                                });
+
+                                // หลังแวะชาร์จ เติมแบตเป็น 90% และเริ่มคำนวณช่วงถัดไปจากสถานีนี้
+                                currentPosKm = stationFound.atKm;
+                                availableKm = evRange * 0.90;
+                            } else {
+                                // --- กรณีไม่พบสถานีชาร์จเลย ---
+
+                                // 1. ดึงพิกัด Lat/Lng บนเส้นทาง ตรงช่วงระยะกิโลเมตรที่แบตจะใกล้หมดพอดี
+                                const warningPoint = getPointAtDistance(routeCoords, safeTargetKm);
+
+                                // 2. ปักหมุดแจ้งเตือนบนแผนที่
+                                if (warningPoint) {
+                                    const marker = L.marker([warningPoint.lat, warningPoint.lng], { icon: warningStopIcon })
+                                        .addTo(map)
+                                        .bindPopup(`
+                                            <div style="text-align: center; font-family: 'Segoe UI', sans-serif;">
+                                                <b style="color: #ef4444; font-size: 16px;">⚠️ จุดเตือนแบตเตอรี่ต่ำ</b><br>
+                                                <span style="color: #6b7280; font-size: 13px;">ช่วง กม. ที่ ${Math.round(safeTargetKm)}</span><br>
+                                                <span style="color: #ef4444; font-size: 12px; font-weight: bold;">ไม่พบสถานีชาร์จในรัศมีโดยรอบ<br>กรุณาวางแผนแวะชาร์จก่อนถึงจุดนี้!</span>
+                                            </div>
+                                        `);
+                                    chargeMarkers.push(marker);
+                                }
+
+                                // 3. เพิ่มข้อมูลแจ้งเตือนลงในแผง Timeline ด้านล่าง
+                                timelineWaypoints.push({
+                                    type: 'charge',
+                                    label: `จุดชาร์จที่ ${stopCount}`,
+                                    title: `ต้องการแวะชาร์จ (ช่วง กม. ที่ ${Math.round(safeTargetKm)})`,
+                                    desc: `<span style="color:#ef4444; font-weight:bold;">⚠️ ไม่พบสถานีชาร์จในรัศมี 30 กม. จากเส้นทาง</span>`,
+                                    chargeTimeMins: 45,
+                                    targetBattery: 90
+                                });
+
+                                currentPosKm = safeTargetKm;
+                                availableKm = evRange * 0.90;
+                            }
                             stopCount++;
                         }
 
-                        // เพิ่มข้อมูล [จุดปลายทาง]
                         timelineWaypoints.push({
-                            type: 'end',
-                            label: 'ถึงที่หมาย',
-                            title: 'จุดหมายปลายทาง',
+                            type: 'end', label: 'ถึงที่หมาย', title: 'จุดหมายปลายทาง',
                             desc: `เดินทางถึงจุดหมายอย่างปลอดภัยพร้อมใช้งานต่อ`
                         });
 
                     } else {
-                        // --- กรณีแบตพอ: ยิงยาวม้วนเดียวจบ ---
                         const percentUsed = (totalDistanceKm / evRange) * 100;
                         const batteryLeft = currentBatt - percentUsed;
 
                         timelineWaypoints.push({
-                            type: 'end',
-                            label: 'ถึงที่หมาย',
-                            title: 'จุดหมายปลายทาง',
+                            type: 'end', label: 'ถึงที่หมาย', title: 'จุดหมายปลายทาง',
                             desc: `ถึงจุดหมายด้วยแบตเตอรี่ ${batteryLeft.toFixed(1)}%`
                         });
                     }
 
-                    // ส่งข้อมูลทั้งหมดไปให้แผง Timeline วาด UI
+                    // อัปเดตแผงสรุปข้อมูล Timeline
                     showRouteSummary(totalDistanceKm, timeMinutes, timelineWaypoints);
                 });
             }
