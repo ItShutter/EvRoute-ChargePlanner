@@ -1,6 +1,7 @@
 const express = require('express');
 const path = require('path');
 const { Pool } = require('pg');
+const axios = require('axios'); // 💡 เพิ่ม axios สำหรับยิง API ไปหา OpenChargeMap
 
 const app = express();
 const port = 3000;
@@ -17,7 +18,11 @@ const pool = new Pool({
 
 app.use(express.static(path.join(__dirname, 'public'), { extensions: ['html'] }));
 
-// 1. API ดึงรุ่นรถจากส่วนกลางไปแสดงที่หน้าเว็บ
+// ==========================================
+// 1. กลุ่ม API สำหรับฐานข้อมูล (Database)
+// ==========================================
+
+// API ดึงรุ่นรถจากส่วนกลางไปแสดงที่หน้าเว็บ
 app.get('/api/ev-models', async (req, res) => {
     try {
         const result = await pool.query('SELECT * FROM ev_models ORDER BY brand, model');
@@ -27,7 +32,7 @@ app.get('/api/ev-models', async (req, res) => {
     }
 });
 
-// 2. API ล็อกอิน (ดึงข้อมูลผู้ใช้และรถกลับไปให้ Frontend)
+// API ล็อกอิน (ดึงข้อมูลผู้ใช้และรถกลับไปให้ Frontend)
 app.post('/api/login', async (req, res) => {
     const { username, password } = req.body;
     try {
@@ -42,7 +47,7 @@ app.post('/api/login', async (req, res) => {
     }
 });
 
-// 3. API สมัครสมาชิก (บันทึก User พร้อมข้อมูลรถ)
+// API สมัครสมาชิก (บันทึก User พร้อมข้อมูลรถ)
 app.post('/api/register', async (req, res) => {
     const { username, password, brand, model, range_km, battery_capacity_kwh } = req.body;
 
@@ -67,13 +72,87 @@ app.post('/api/register', async (req, res) => {
     }
 });
 
-// 4. API สำหรับแอดมิน ดึงข้อมูลทุกคน
+// API สำหรับแอดมิน ดึงข้อมูลทุกคน
 app.get('/api/admin/users', async (req, res) => {
     try {
         const result = await pool.query('SELECT username, role FROM users ORDER BY role ASC, username ASC');
         res.json({ success: true, users: result.rows });
     } catch (error) {
         res.status(500).json({ success: false, message: 'เกิดข้อผิดพลาดในการดึงข้อมูลจากฐานข้อมูล' });
+    }
+});
+
+// ==========================================
+// 2. กลุ่ม API สำหรับแผนที่สถานีชาร์จ (ซ่อน API Key)
+// ==========================================
+
+// 1. API สำหรับค้นหาสถานีชาร์จแบบ 2 แหล่ง (Google Maps + OpenChargeMap) สำหรับคำนวณเส้นทาง
+app.get('/api/stations', async (req, res) => {
+    try {
+        const { lat, lng, distance } = req.query;
+
+        // 🔑 ตั้งค่า API Key ของทั้ง 2 แหล่ง
+        const ocmApiKey = 'e2235a72-1320-4010-b9a1-b54cf27381d0';
+        const googleApiKey = 'AIzaSyDX-7wEXvLsU6AfXXw9Zw-sbUjUAb4PRLc'; // 💡 อย่าลืมเปลี่ยนเป็น API Key ของ Google
+
+        const radius = distance * 1000; // แปลงกิโลเมตรเป็นเมตรสำหรับ Google API
+
+        // เตรียม URL สำหรับเรียก API
+        const googleUrl = `https://maps.googleapis.com/maps/api/place/nearbysearch/json?location=${lat},${lng}&radius=${radius}&type=charging_station&keyword=EV&language=th&key=${googleApiKey}`;
+        const ocmUrl = `https://api.openchargemap.io/v3/poi?key=${ocmApiKey}&latitude=${lat}&longitude=${lng}&distance=${distance}&distanceunit=KM&maxresults=5`;
+
+        // 🚀 ยิง Request ดึงข้อมูลพร้อมกันทั้ง 2 แหล่ง (ใช้ Promise.allSettled เพื่อไม่ให้ระบบล่มถ้าอันใดอันหนึ่งพัง)
+        const [googleRes, ocmRes] = await Promise.allSettled([
+            axios.get(googleUrl),
+            axios.get(ocmUrl)
+        ]);
+
+        let combinedStations = [];
+
+        // ส่วนที่ 1: จัดการข้อมูลจาก Google Maps (ถ้าดึงสำเร็จ)
+        if (googleRes.status === 'fulfilled' && googleRes.value.data.results) {
+            const gData = googleRes.value.data.results.map(st => ({
+                lat: st.geometry.location.lat,
+                lng: st.geometry.location.lng,
+                title: st.name,
+                operator: st.vicinity || 'ไม่ระบุที่อยู่',
+                source: 'Google Maps' // แนบป้ายกำกับบอกที่มา
+            }));
+            combinedStations.push(...gData); // จับใส่ Array
+        }
+
+        // ส่วนที่ 2: จัดการข้อมูลจาก OpenChargeMap (ถ้าดึงสำเร็จ)
+        if (ocmRes.status === 'fulfilled' && ocmRes.value.data) {
+            const oData = ocmRes.value.data.map(st => ({
+                lat: st.AddressInfo.Latitude,
+                lng: st.AddressInfo.Longitude,
+                title: st.AddressInfo.Title || 'สถานีชาร์จ EV',
+                operator: st.OperatorInfo ? st.OperatorInfo.Title : 'ไม่ระบุผู้ให้บริการ',
+                source: 'OpenChargeMap' // แนบป้ายกำกับบอกที่มา
+            }));
+            combinedStations.push(...oData); // จับใส่ Array ต่อท้าย
+        }
+
+        // ส่งข้อมูลที่จับรวมและจัดรูปแบบให้เหมือนกันแล้ว กลับไปให้ Frontend (map.js)
+        res.json(combinedStations);
+    } catch (error) {
+        console.error("Combined API Error:", error.message);
+        res.status(500).json({ error: "Failed to fetch stations" });
+    }
+});
+
+// 2. API สำหรับดึงสถานีชาร์จมาวาดลงบนแผนที่โดยรวม (Bounding Box)
+app.get('/api/stations/bounds', async (req, res) => {
+    try {
+        const { n, w, s, e } = req.query;
+        const ocmApiKey = 'e2235a72-1320-4010-b9a1-b54cf27381d0';
+
+        const url = `https://api.openchargemap.io/v3/poi?key=${ocmApiKey}&boundingbox=(${n},${w}),(${s},${e})&maxresults=500`;
+        const response = await axios.get(url);
+        res.json(response.data);
+    } catch (error) {
+        console.error("Error fetching map bounds:", error.message);
+        res.status(500).json({ error: "Failed to fetch map bounds" });
     }
 });
 

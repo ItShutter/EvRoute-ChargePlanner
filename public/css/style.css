@@ -1,0 +1,343 @@
+body {
+    margin: 0;
+    padding: 0;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+#map {
+    width: 100vw;
+    height: 100vh;
+}
+
+.marker-cluster-small,
+.marker-cluster-medium,
+.marker-cluster-large {
+    background-color: rgba(16, 185, 129, 0.6);
+}
+
+.marker-cluster-small div,
+.marker-cluster-medium div,
+.marker-cluster-large div {
+    background-color: rgba(16, 185, 129, 0.9);
+    color: white;
+    font-weight: bold;
+}
+
+/* 🔍 ช่องค้นหามุมซ้ายบน */
+#top-left-search {
+    position: absolute;
+    top: 20px;
+    left: 65px;
+    z-index: 1000;
+    width: 280px;
+}
+
+.search-box {
+    background: white;
+    padding: 10px 14px;
+    border-radius: 10px;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.15);
+    display: flex;
+    gap: 8px;
+}
+
+.search-box input {
+    width: 100%;
+    border: none;
+    outline: none;
+    font-size: 14px;
+}
+
+.search-btn {
+    background: #3b82f6;
+    color: white;
+    border: none;
+    padding: 6px 12px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-weight: bold;
+    font-size: 13px;
+}
+
+.search-btn:hover {
+    background: #2563eb;
+}
+
+/* 📍 แผงควบคุมมุมขวาบน */
+#top-right-panel {
+    position: absolute;
+    top: 20px;
+    right: 20px;
+    z-index: 1000;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    width: 300px;
+}
+
+#user-profile-top {
+    background: white;
+    padding: 10px 16px;
+    border-radius: 10px;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.15);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    font-size: 14px;
+}
+
+.clickable-username {
+    color: #3b82f6;
+    cursor: pointer;
+    text-decoration: none;
+}
+
+.clickable-username:hover {
+    text-decoration: underline;
+}
+
+.logout-btn {
+    background: #ef4444;
+    color: white;
+    border: none;
+    padding: 5px 12px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 12px;
+    font-weight: bold;
+}
+
+.logout-btn:hover {
+    background: #dc2626;
+}
+
+#user-status {
+    background: white;
+    padding: 12px 16px;
+    border-radius: 10px;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.15);
+    border-left: 5px solid #10b981;
+    cursor: pointer;
+    transition: transform 0.2s;
+}
+
+#user-status:hover {
+    transform: translateY(-2px);
+}
+
+#user-status h4 {
+    margin: 0 0 4px 0;
+    color: #1f2937;
+    font-size: 14px;
+}
+
+#user-status p {
+    margin: 0;
+    font-size: 13px;
+    color: #4b5563;
+}
+
+/* --- CSS สำหรับแผงสรุปเส้นทาง (ปรับเป็นกล่องมุมซ้ายล่าง) --- */
+.bottom-panel {
+    position: absolute;
+    bottom: 25px;
+    left: 25px;
+    right: auto;
+    width: 380px;
+    max-width: 90vw;
+    box-sizing: border-box;
+    /* 💡 ป้องกันกล่องล้นหน้าจอ */
+    background: #ffffff;
+    border-radius: 20px;
+    padding: 20px 25px;
+    box-shadow: 0 8px 30px rgba(0, 0, 0, 0.15);
+    z-index: 1000;
+    max-height: 65vh;
+    overflow-y: auto;
+    transition: transform 0.3s ease, opacity 0.3s ease;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+/* แอนิเมชันเวลาซ่อนกล่อง */
+.bottom-panel.hidden {
+    transform: translateY(150%);
+    opacity: 0;
+}
+
+#route-summary-panel {
+    /* ปรับพื้นหลังให้ไล่สีเขียวอ่อนๆ สบายตา สไตล์แอปยุคใหม่ */
+    background: linear-gradient(135deg, #b6dffa 10%, #faf4bf 100%) !important;
+    /* เพิ่มเงาบางๆ ด้านบนให้กล่องดูลอยแยกออกจากแผนที่ชัดเจนขึ้น */
+    box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.08) !important;
+}
+
+.panel-header {
+    text-align: center;
+    margin-bottom: 15px;
+}
+
+.drag-handle {
+    width: 50px;
+    height: 5px;
+    background: #d1d5db;
+    border-radius: 5px;
+    margin: 0 auto;
+}
+
+.summary-card {
+    background: #1f2937;
+    color: white;
+    padding: 15px 20px;
+    border-radius: 12px;
+    margin-bottom: 25px;
+}
+
+.summary-card h3 {
+    margin: 0 0 10px 0;
+    font-size: 16px;
+}
+
+.summary-card p {
+    font-size: 13px;
+    color: #d1d5db;
+    margin: 0 0 15px 0;
+    line-height: 1.5;
+}
+
+.summary-stats {
+    display: flex;
+    justify-content: space-between;
+    font-size: 14px;
+    color: #10b981;
+}
+
+.timeline {
+    position: relative;
+    padding-left: 20px;
+    margin-bottom: 20px;
+}
+
+.timeline::before {
+    content: '';
+    position: absolute;
+    left: 4px;
+    top: 5px;
+    bottom: 5px;
+    width: 2px;
+    background: #e5e7eb;
+}
+
+.timeline-item {
+    position: relative;
+    padding-bottom: 25px;
+}
+
+.timeline-item:last-child {
+    padding-bottom: 0;
+}
+
+.timeline-item::before {
+    content: '';
+    position: absolute;
+    left: -20px;
+    top: 5px;
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    background: #9ca3af;
+    border: 2px solid white;
+    box-shadow: 0 0 0 2px #e5e7eb;
+}
+
+.timeline-item.start::before {
+    background: #3b82f6;
+    box-shadow: 0 0 0 2px #bfdbfe;
+}
+
+.timeline-item.charge::before {
+    background: #10b981;
+    box-shadow: 0 0 0 2px #a7f3d0;
+}
+
+.timeline-item.end::before {
+    background: #ef4444;
+    box-shadow: 0 0 0 2px #fecaca;
+}
+
+.timeline-title {
+    font-size: 14px;
+    font-weight: bold;
+    color: #374151;
+    margin-bottom: 5px;
+}
+
+.timeline-desc {
+    font-size: 12px;
+    color: #6b7280;
+    margin-bottom: 8px;
+}
+
+.timeline-badge {
+    display: inline-block;
+    background: #ecfdf5;
+    color: #059669;
+    padding: 4px 8px;
+    border-radius: 6px;
+    font-size: 11px;
+    font-weight: bold;
+    margin-right: 5px;
+}
+
+/* ปรับปุ่มนำทาง Google Maps ให้เล็กลงและจัดกึ่งกลาง */
+.google-map-btn-floating {
+    position: relative;
+    margin: 25px auto 5px auto;
+    background: #4285F4;
+    color: white;
+    border: none;
+    padding: 10px 20px;
+    border-radius: 25px;
+    cursor: pointer;
+    font-size: 14px;
+    font-weight: bold;
+    box-shadow: 0 4px 12px rgba(66, 133, 244, 0.3);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    width: fit-content;
+    transition: all 0.2s ease;
+}
+
+.google-map-btn-floating:hover {
+    background: #3367D6;
+    transform: scale(1.05);
+}
+
+/* 📱 สำหรับหน้าจอมือถือ */
+@media screen and (max-width: 768px) {
+
+    /* 💡 คืนค่าให้ช่องค้นหาและโปรไฟล์บนมือถือ */
+    #top-left-search {
+        left: 55px;
+        right: 15px;
+        width: auto;
+    }
+
+    #top-right-panel {
+        top: 80px;
+        left: 55px;
+        right: 15px;
+        width: auto;
+    }
+
+    /* ปรับแผงข้อมูลให้เป็นลิ้นชักด้านล่าง */
+    .bottom-panel {
+        bottom: 0;
+        left: 0;
+        width: 100%;
+        max-width: 100%;
+        border-radius: 24px 24px 0 0;
+        max-height: 50vh;
+    }
+}
