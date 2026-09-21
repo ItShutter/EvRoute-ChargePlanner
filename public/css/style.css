@@ -314,30 +314,146 @@ body {
     transform: scale(1.05);
 }
 
-/* 📱 สำหรับหน้าจอมือถือ */
+/* 📱 สำหรับหน้าจอมือถือ (ปรับให้เล็กที่สุดและจัดเรียงแนวนอนเพื่อประหยัดพื้นที่) */
 @media screen and (max-width: 768px) {
 
-    /* 💡 คืนค่าให้ช่องค้นหาและโปรไฟล์บนมือถือ */
+    /* 1. ย่อช่องค้นหาด้านบนสุด */
     #top-left-search {
-        left: 55px;
-        right: 15px;
+        top: 10px;
+        left: 50px;
+        /* หลบปุ่มซูม */
+        right: 10px;
         width: auto;
     }
 
-    #top-right-panel {
-        top: 80px;
-        left: 55px;
-        right: 15px;
-        width: auto;
+    .search-box {
+        padding: 5px 10px;
     }
 
-    /* ปรับแผงข้อมูลให้เป็นลิ้นชักด้านล่าง */
+    .search-box input {
+        font-size: 13px;
+        padding: 2px;
+    }
+
+    .search-btn {
+        padding: 4px 10px;
+        font-size: 12px;
+    }
+
+        /* 2. จับกล่อง User และข้อมูลรถให้เล็กลงเหลือครึ่งเดียว ไม่ยืดเต็มจอ */
+        #top-right-panel {
+            top: 52px;
+            left: 50px;
+            right: auto;
+            /* 💡 ยกเลิกการยืดเต็มจอไปทางขวา */
+            width: max-content;
+            /* บังคับให้กล่องกว้างเท่าที่ตัวหนังสือมี */
+            max-width: 75vw;
+            /* ป้องกันไม่ให้ทะลุจอถ้ารถชื่อยาว */
+            flex-direction: row;
+            gap: 5px;
+        }
+    
+        #user-profile-top {
+            padding: 4px 8px;
+            font-size: 10px;
+            /* ลดขนาดฟอนต์ลงอีก */
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 3px;
+            min-width: 60px;
+            /* บังคับกล่อง User ให้เล็กที่สุด */
+        }
+    
+        .logout-btn {
+            padding: 3px 5px;
+            font-size: 9px;
+            width: 100%;
+        }
+    
+        #user-status {
+            padding: 4px 8px;
+            border-left: 2px solid #10b981;
+            max-width: 140px;
+            /* 💡 บังคับช่องข้อมูลรถให้แคบลงเหลือครึ่งเดียว */
+        }
+    
+        #user-status h4 {
+            font-size: 10px;
+            margin-bottom: 2px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            /* ถ้ารุ่นรถยาวเกิน 140px จะถูกตัดเป็น ... อัตโนมัติ */
+        }
+    
+        #user-status p {
+            font-size: 9px;
+            margin: 0;
+        }
+
+    /* 3. ย่อแผงสรุปเส้นทางด้านล่างให้เตี้ยลงอีก */
     .bottom-panel {
         bottom: 0;
         left: 0;
         width: 100%;
         max-width: 100%;
-        border-radius: 24px 24px 0 0;
-        max-height: 50vh;
+        border-radius: 15px 15px 0 0;
+        max-height: 20vh;
+        /* 💡 บังคับความสูงไม่เกิน 35% ของหน้าจอ (ใช้นิ้วเลื่อนดูข้างในได้) */
+        padding: 10px 15px;
+    }
+
+    /* ย่อส่วนประกอบข้างในแผงด้านล่างให้กระทัดรัดที่สุด */
+    .panel-header {
+        margin-bottom: 8px;
+    }
+
+    .drag-handle {
+        height: 4px;
+    }
+
+    .summary-card {
+        padding: 8px 12px;
+        margin-bottom: 12px;
+    }
+
+    .summary-card h3 {
+        font-size: 13px;
+        margin-bottom: 2px;
+    }
+
+    .summary-card p {
+        font-size: 11px;
+        margin-bottom: 5px;
+    }
+
+    .summary-stats {
+        font-size: 11px;
+    }
+
+    .timeline-item {
+        padding-bottom: 12px;
+    }
+
+    .timeline-title {
+        font-size: 12px;
+    }
+
+    .timeline-desc {
+        font-size: 10px;
+        margin-bottom: 2px;
+    }
+
+    .timeline-badge {
+        font-size: 9px;
+        padding: 2px 5px;
+    }
+
+    .google-map-btn-floating {
+        padding: 8px 15px;
+        font-size: 12px;
+        margin: 10px auto 5px auto;
     }
 }
