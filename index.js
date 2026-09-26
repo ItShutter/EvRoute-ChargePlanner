@@ -156,4 +156,38 @@ app.get('/api/stations/bounds', async (req, res) => {
     }
 });
 
+// ==========================================
+// 4. กลุ่ม API ประวัติการเดินทาง
+// ==========================================
+
+// API บันทึกประวัติการเดินทาง
+app.post('/api/history', async (req, res) => {
+    const { username, destination_name, start_lat, start_lng, end_lat, end_lng } = req.body;
+    try {
+        await pool.query(
+            `INSERT INTO trip_history (username, destination_name, start_lat, start_lng, end_lat, end_lng)
+             VALUES ($1, $2, $3, $4, $5, $6)`,
+            [username, destination_name, start_lat, start_lng, end_lat, end_lng]
+        );
+        res.json({ success: true });
+    } catch (error) {
+        console.error("Save history error:", error);
+        res.status(500).json({ error: "Failed to save history" });
+    }
+});
+
+// API ดึงประวัติการเดินทางของผู้ใช้ (ดึง 10 รายการล่าสุด)
+app.get('/api/history', async (req, res) => {
+    const { username } = req.query;
+    try {
+        const result = await pool.query(
+            'SELECT * FROM trip_history WHERE username = $1 ORDER BY created_at DESC LIMIT 10',
+            [username]
+        );
+        res.json({ success: true, history: result.rows });
+    } catch (error) {
+        res.status(500).json({ error: "Failed to fetch history" });
+    }
+});
+
 app.listen(port, () => console.log(`🚀 Server is running on port ${port}`));

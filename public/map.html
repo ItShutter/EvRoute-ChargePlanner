@@ -26,7 +26,7 @@
         <div class="search-box">
             <input type="text" id="search-input" placeholder="🔍 ค้นหาสถานที่, จุดหมาย..."
                 onkeypress="handleSearchKey(event)">
-            <button class="search-btn" onclick="searchLocation()">ค้นหา</button>
+            <button type="button" class="search-btn" onclick="searchLocation()">ค้นหา</button>
         </div>
     </div>
 
@@ -36,6 +36,8 @@
             <span>👤 <strong id="display-username" class="clickable-username"
                     onclick="goToProfile()">Guest</strong></span>
             <button class="logout-btn" onclick="logout()">ออกจากระบบ</button>
+            <button class="logout-btn" style="background: #3b82f6; margin-top: 5px;" onclick="openHistoryModal()">📜
+                ประวัติ</button>
         </div>
         <div id="user-status" title="คลิกเพื่อแก้ไขข้อมูลรถ">
             <h4 id="status-car-name">🚗 กำลังโหลดข้อมูลรถ...</h4>
@@ -93,6 +95,24 @@
                 <button onclick="saveProfile()"
                     style="background: #10b981; color: white; border: none; padding: 10px 15px; border-radius: 6px; cursor: pointer; width: 45%; font-weight: bold;">💾
                     บันทึก</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 📜 หน้าต่างป๊อปอัปสำหรับประวัติการเดินทาง -->
+    <div id="history-modal"
+        style="display: none; position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(0,0,0,0.5); z-index: 2000; align-items: center; justify-content: center;">
+        <div
+            style="background: white; padding: 20px; border-radius: 12px; width: 90%; max-width: 400px; max-height: 80vh; overflow-y: auto; box-shadow: 0 10px 25px rgba(0,0,0,0.3);">
+            <div
+                style="display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #eee; padding-bottom: 10px; margin-bottom: 10px;">
+                <h3 style="margin: 0; font-size: 16px;">📜 ประวัติการเดินทางล่าสุด</h3>
+                <button onclick="closeHistoryModal()"
+                    style="background: #ef4444; color: white; border: none; border-radius: 50%; width: 25px; height: 25px; cursor: pointer; font-weight: bold;">X</button>
+            </div>
+            <div id="history-list">
+                <!-- รายการประวัติจะถูกสร้างที่นี่โดย JS -->
+                <p style="text-align: center; color: #666; font-size: 13px;">กำลังโหลดข้อมูล...</p>
             </div>
         </div>
     </div>
