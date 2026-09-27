@@ -44,7 +44,15 @@ const port = 3000;
 // ==========================================
 // 🛡️ เปิดใช้งาน Middleware ความปลอดภัย
 // ==========================================
-app.use(helmet()); // ป้องกันผ่าน Headers พื้นฐาน
+// แทนที่ app.use(helmet()); เดิมด้วยชุดนี้
+app.use(helmet({
+    hsts: {
+        maxAge: 31536000, // 1 ปี
+        includeSubDomains: true,
+        preload: true
+    }
+})); // ป้องกันผ่าน Headers พื้นฐาน
+
 app.use(express.json()); // (เก็บไว้บรรทัดเดียว)
 app.use(xss()); // ล้างแท็ก HTML/Script อันตรายออกจาก req อัตโนมัติ
 
