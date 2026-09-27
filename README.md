@@ -7,23 +7,29 @@
 * แก้ปัญหาหลักผู้ใช้รถกังวลแบตเตอรี่หมดกลางทางและหาสถานีชาร์จไม่ตรงรุ่น
 * เป้าหมายของระบบคือการคำนวณเส้นทางและจุดแวะชาร์จอัตโนมัติอ้างอิงสเปกรถจริง
 
+## ✨ ฟีเจอร์เด่น (Key Features)
+* Two-Pass Routing Optimization: ระบบคำนวณเส้นทางอัจฉริยะที่สามารถสแกนหาสถานีชาร์จและลากเส้นทางเบี่ยง (Detour) ออกนอกเส้นทางหลักเพื่อแวะชาร์จได้อัตโนมัติ
+* Dual-Source Station Data: ผสานข้อมูลสถานีชาร์จจากหลายแหล่ง (Open Charge Map, OpenStreetMap และ Google Places API) เพื่อความครอบคลุมสูงสุด
+* Trip History: ระบบบันทึกประวัติการเดินทางของผู้ใช้ สามารถเรียกดูและนำเส้นทางเดิมกลับมาคำนวณใหม่ได้ทันที
+* Mobile-Responsive UI: หน้าจอถูกออกแบบและปรับขนาดส่วนประกอบต่างๆ ให้ใช้งานผ่านสมาร์ตโฟนได้อย่างสมบูรณ์
+
 ## 🏗️ การออกแบบ Data Model (OOP Concept)
 โปรเจกต์นี้ประยุกต์ใช้แนวคิดการเขียนโปรแกรมเชิงวัตถุ (Object-Oriented Programming) ในการออกแบบสถาปัตยกรรมระบบ:
-* **Object & Class:** มีการจำลองส่วนประกอบในระบบเป็นคลาส ได้แก่ User, EV_Vehicle และ ChargingStation
-* **Encapsulation:** มีการซ่อนข้อมูลผ่าน API ป้องกันการเข้าถึงฐานข้อมูลโดยตรง เพื่อความปลอดภัย
-* **Behavior:** วัตถุในระบบมีพฤติกรรมคำนวณระยะทางและหักลบแบตเตอรี่อัตโนมัติ
+* Object & Class: มีการจำลองส่วนประกอบในระบบเป็นคลาส ได้แก่ User, EV_Vehicle, ChargingStation และ TripHistory
+* Encapsulation: มีการซ่อนข้อมูลผ่าน API และซ่อน API Key ของผู้ให้บริการแผนที่ไว้ฝั่ง Backend ป้องกันการเข้าถึงโดยตรง เพื่อความปลอดภัย
+* Behavior: วัตถุในระบบมีพฤติกรรมคำนวณระยะทาง หักลบแบตเตอรี่อัตโนมัติ และสแกนรัศมีแบบย้อนหลังเพื่อหาจุดแวะชาร์จที่ปลอดภัยที่สุด
 
 ## 🛠️ เทคโนโลยีที่ใช้ (Tech Stack)
-- **Frontend:** HTML, CSS, JavaScript (Leaflet.js, OpenStreetMap)
-- **Backend:** Node.js, Express.js
-- **Database:** PostgreSQL
-- **APIs:** Open Charge Map API (ข้อมูลสถานีชาร์จ), Overpass API (OSM)
+* Frontend: HTML, CSS, JavaScript (Leaflet.js, OpenStreetMap, Leaflet Routing Machine)
+* Backend: Node.js, Express.js
+* Database: PostgreSQL
+* APIs: Open Charge Map API, Overpass API (OSM), Google Places API (Legacy)
 
 ## 🚀 วิธีการติดตั้งและรันโปรแกรมบนเครื่องส่วนตัว (Local Environment)
 เพื่อป้องกันผลกระทบกับระบบโดเมนและฐานข้อมูลที่กำลังใช้งานจริง กรุณารันโปรเจกต์นี้เพื่อทดสอบผ่าน Localhost ตามขั้นตอนต่อไปนี้:
 
-**1. การตั้งค่าฐานข้อมูล (PostgreSQL)**
-โปรเจกต์นี้จำเป็นต้องใช้ฐานข้อมูล กรุณาสร้าง Database ชื่อ `ev_planner` และรันคำสั่ง SQL ด้านล่างนี้เพื่อสร้างตารางข้อมูลพื้นฐาน:
+**1. การตั้งค่าฐานข้อมูล (PostgreSQL)**   
+โปรเจกต์นี้จำเป็นต้องใช้ฐานข้อมูล กรุณาสร้าง Database ชื่อ `ev_planner` และรันคำสั่ง SQL ด้านล่างนี้เพื่อสร้างตารางข้อมูลพื้นฐานและตารางประวัติการเดินทาง:
 
 ```sql
 CREATE TABLE ev_models (
@@ -44,6 +50,17 @@ CREATE TABLE users (
     ev_model VARCHAR(100),
     ev_range_km NUMERIC,
     ev_capacity_kwh NUMERIC
+);
+
+CREATE TABLE trip_history (
+    id SERIAL PRIMARY KEY,
+    username VARCHAR(50) NOT NULL,
+    destination_name TEXT,
+    start_lat NUMERIC,
+    start_lng NUMERIC,
+    end_lat NUMERIC,
+    end_lng NUMERIC,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
 -- บัญชีแอดมินเริ่มต้น
