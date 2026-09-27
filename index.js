@@ -1,13 +1,64 @@
 const express = require('express');
 const path = require('path');
 const { Pool } = require('pg');
-const axios = require('axios'); // 💡 เพิ่ม axios สำหรับยิง API ไปหา OpenChargeMap
+const axios = require('axios'); // สำหรับยิง API ไปหา OpenChargeMap
+
+// 🛡️ กลุ่ม require สำหรับระบบความปลอดภัย
+const xss = require('xss-clean');
+const helmet = require('helmet');
+const rateLimit = require('express-rate-limit');
+const bcrypt = require('bcrypt');
+
+// 🛡️ ตอนสมัครสมาชิก (Register)
+app.post('/api/register', async (req, res) => {
+    const { username, password } = req.body;
+    const saltRounds = 10;
+    const hashedPassword = await bcrypt.hash(password, saltRounds); // เข้ารหัสผ่าน
+
+    await pool.query('INSERT INTO users (username, password) VALUES ($1, $2)', [username, hashedPassword]);
+    res.json({ success: true });
+});
+
+// 🛡️ ตอนล็อกอิน (Login)
+app.post('/api/login', async (req, res) => {
+    const { username, password } = req.body;
+    const result = await pool.query('SELECT * FROM users WHERE username = $1', [username]);
+
+    if (result.rows.length > 0) {
+        const user = result.rows[0];
+        // เปรียบเทียบรหัสที่พิมพ์มา กับรหัสที่ถูก Hash ไว้ในฐานข้อมูล
+        const match = await bcrypt.compare(password, user.password);
+        if (match) {
+            res.json({ success: true, message: "เข้าสู่ระบบสำเร็จ" });
+        } else {
+            res.status(401).json({ error: "รหัสผ่านไม่ถูกต้อง" });
+        }
+    } else {
+        res.status(404).json({ error: "ไม่พบผู้ใช้นี้" });
+    }
+});
 
 const app = express();
 const port = 3000;
 
-app.use(express.json());
+// ==========================================
+// 🛡️ เปิดใช้งาน Middleware ความปลอดภัย
+// ==========================================
+app.use(helmet()); // ป้องกันผ่าน Headers พื้นฐาน
+app.use(express.json()); // (เก็บไว้บรรทัดเดียว)
+app.use(xss()); // ล้างแท็ก HTML/Script อันตรายออกจาก req อัตโนมัติ
 
+// จำกัด Request ป้องกัน Brute Force / DDoS (100 ครั้ง / 15 นาที)
+const limiter = rateLimit({
+    windowMs: 15 * 60 * 1000,
+    max: 100,
+    message: { error: "คุณส่งคำขอมากเกินไป กรุณารอสักครู่แล้วลองใหม่" }
+});
+app.use('/api/', limiter); // บังคับใช้กับเส้นทางที่ขึ้นต้นด้วย /api/ ทั้งหมด
+
+// ==========================================
+// การตั้งค่าฐานข้อมูล
+// ==========================================
 const pool = new Pool({
     user: 'ev_admin',
     host: 'localhost',
